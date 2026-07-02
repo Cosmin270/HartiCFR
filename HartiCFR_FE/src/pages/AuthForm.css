@@ -1,0 +1,40 @@
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 320px;
+}
+
+.auth-form label {
+  font-family: 'Inknut Antiqua', serif;
+  color: #1e2530;
+  margin-bottom: -12px;
+}
+
+.auth-form input {
+  width: 100%;      
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 8px;
+  background-color: #ddd;
+  font-size: 1rem;
+}
+
+.auth-form__error {
+  color: #b00020;
+  font-size: 0.9rem;
+  margin: 0;
+}
+.auth-form .auth-page__button {
+  width: 100%;
+  max-width: none;
+  margin-top: 16px;
+  padding: 12px 14px;
+  background-color: #1e2530;
+  color: #4fc3d9;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}

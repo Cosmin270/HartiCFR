@@ -1,0 +1,6 @@
+@HartiCFR_BE_HostAddress = http://localhost:5016
+
+GET {{HartiCFR_BE_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

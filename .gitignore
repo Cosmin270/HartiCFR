@@ -1,0 +1,27 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude local settings
+.claude/settings.local.json
+
+# ---- .NET backend (HartiCFR_BE) ----
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+
+# ---- Node / frontend (HartiCFR_FE) ----
+node_modules/
+dist/
+dist-ssr/
+*.local
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*

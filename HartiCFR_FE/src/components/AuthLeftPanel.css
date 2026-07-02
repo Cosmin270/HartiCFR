@@ -1,0 +1,40 @@
+.auth-left {
+  flex: 1;
+  min-width: 0;
+  background-color: #1e2530;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.auth-left__card {
+  background-color: #eeeeee;
+  border-radius: 12px;
+  padding: 20px 30px;
+}
+
+.auth-left__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-left__logo h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1e2530;
+  margin: 0;
+}
+
+.auth-left__content h2 {
+  font-size: 2rem;
+  color: #1e2530;
+  margin: 0;
+}
+
+.auth-left__brand-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}

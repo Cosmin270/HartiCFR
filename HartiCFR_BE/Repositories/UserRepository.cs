@@ -1,0 +1,41 @@
+using HartiCFR_BE.Data;
+using HartiCFR_BE.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace HartiCFR_BE.Repositories;
+
+public class UserRepository : IUserRepository
+{
+    private readonly AppDbContext _context;
+
+    public UserRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<User?> GetByEmailAsync(string email)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<bool> EmailExistsAsync(string email)
+    {
+        return await _context.Users.AnyAsync(u => u.Email == email);
+    }
+
+    public async Task AddAsync(User user)
+    {
+        await _context.Users.AddAsync(user);
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
+
+    Task<User?> IUserRepository.GetByEmailAsync(string email)
+    {
+        throw new NotImplementedException();
+    }
+
+}
