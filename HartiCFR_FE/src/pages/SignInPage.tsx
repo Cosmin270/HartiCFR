@@ -40,26 +40,26 @@ export default function SignInPage() {
     return (
         <div className="auth-page">
             <AuthLeftPanel />
-
+            
             <div className="auth-page__right">
                 <form className="auth-form" onSubmit={handleSignIn}>
-                    <label>Name</label>
                     <input
                         type="text"
+                        placeholder="Name"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
                     />
-                    <label>Email</label>
-                    <input
+                     <input
                         type="email"
+                        placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
-                    <label>Password</label>
                     <input
                         type="password"
+                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -68,6 +68,9 @@ export default function SignInPage() {
 
                     <button type="submit" className="auth-page__button">Sign In</button>
                 </form>
+                <button type="button" className="auth-page__button2" onClick={() => navigate("/login")}>
+                    LogIn
+                </button>
             </div>
         </div>
     );

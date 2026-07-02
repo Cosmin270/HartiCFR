@@ -8,7 +8,7 @@ export default function AuthLeftPanel() {
         <h1>Harti CFR</h1>
       </div>
       <div className="auth-left__card auth-left__content">
-        <h2>Ceva</h2>
+        <h2>Ceva.......................................................................................................</h2>
       </div>
     </div>
   );

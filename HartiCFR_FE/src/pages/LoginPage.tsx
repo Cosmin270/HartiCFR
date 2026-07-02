@@ -55,6 +55,10 @@ export default function LoginPage() {
 
                     <button type="submit" className="auth-page__button">Log In</button>
                 </form>
+
+                <button type="button" className="auth-page__button2" onClick={() => navigate("/signin")}>
+                    SignIn
+                </button>
             </div>
         </div>
     );

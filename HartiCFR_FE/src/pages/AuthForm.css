@@ -38,3 +38,16 @@
   font-size: 1rem;
   cursor: pointer;
 }
+
+.auth-page__button2 {
+  width: 10%;
+  max-width: none;
+  margin-top: 1px;
+  padding: 4px 4px;
+  background-color: #5a637186;
+  color: #ffffffda;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}

@@ -31,6 +31,8 @@
   font-size: 2rem;
   color: #1e2530;
   margin: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .auth-left__brand-logo {
