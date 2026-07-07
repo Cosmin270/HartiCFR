@@ -1,42 +1,95 @@
 .auth-left {
-  flex: 1;
+  position: relative;
+  flex: 1 1 50%;
   min-width: 0;
-  background-color: #1e2530;
-  padding: 60px;
+  overflow: hidden;
+  background: var(--gradient-panel);
+  color: var(--color-panel-foreground);
+  padding: 56px 56px 40px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
-.auth-left__card {
-  background-color: #eeeeee;
-  border-radius: 12px;
-  padding: 20px 30px;
+.auth-left__decor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.auth-left__decor .line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.auth-left__decor .line--a { stroke: var(--color-primary); }
+.auth-left__decor .line--b { stroke: var(--color-secondary); }
+.auth-left__decor .line--c { stroke: var(--color-accent); opacity: 0.7; }
+
+.auth-left__decor .stop {
+  fill: var(--color-panel);
+  stroke: #fff;
+  stroke-width: 3;
+}
+
+.auth-left__brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .auth-left__logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.auth-left__logo h1 {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #1e2530;
-  margin: 0;
-}
-
-.auth-left__content h2 {
-  font-size: 2rem;
-  color: #1e2530;
-  margin: 0;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-.auth-left__brand-logo {
-  width: 100px;
-  height: 100px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
+  border-radius: 10px;
+  background: #fff;
+  padding: 6px;
+}
+
+.auth-left__wordmark {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.auth-left__content {
+  position: relative;
+  margin-top: auto;
+}
+
+.auth-left__title {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.auth-left__subtitle {
+  margin-top: 18px;
+  max-width: 42ch;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--color-panel-muted);
+}
+
+@media (max-width: 860px) {
+  .auth-left {
+    flex-basis: auto;
+    padding: 32px 28px;
+    gap: 20px;
+  }
+  .auth-left__decor { opacity: 0.3; }
+  .auth-left__content { margin-top: 8px; }
+  .auth-left__subtitle { display: none; }
 }

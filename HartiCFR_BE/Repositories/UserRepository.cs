@@ -32,10 +32,4 @@ public class UserRepository : IUserRepository
     {
         await _context.SaveChangesAsync();
     }
-
-    Task<User?> IUserRepository.GetByEmailAsync(string email)
-    {
-        throw new NotImplementedException();
-    }
-
 }

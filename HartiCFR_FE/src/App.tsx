@@ -3,6 +3,7 @@ import AuthPage from "./pages/AuthPage";
 import LoginPage from "./pages/LoginPage";
 import SignInPage from "./pages/SignInPage";
 import DashboardPage from "./pages/DashboardPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
 
@@ -11,7 +12,9 @@ function App() {
             <Route path="/" element={<AuthPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signin" element={<SignInPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+            </Route>
         </Routes>
     );
 }
