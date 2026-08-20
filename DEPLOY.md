@@ -22,21 +22,30 @@ git push origin main
 If any of those service names are already taken, Render appends a suffix — see
 step 3, because two URLs are hard-coded and must then be corrected.
 
-## 3. Confirm the two cross-references
+## 3. How the frontend reaches the API
 
-The frontend and backend each need to know the other's public URL, and they are
-set as plain values because Render has no variable that yields a full `https://`
-URL. After the first deploy, check both in the dashboard:
+The browser never calls the API's own hostname. The static site rewrites
+`/api/*` to `https://harticfr-api.onrender.com/api/*`, so from the browser's
+point of view the API lives at the site's own origin.
 
-| Service | Variable | Must equal |
-|---|---|---|
-| `harticfr-api` | `Cors__AllowedOrigins` | the static site's URL, e.g. `https://harticfr.onrender.com` |
-| `harticfr` | `VITE_API_URL` | the API's URL, e.g. `https://harticfr-api.onrender.com` |
+This is not a nicety. `onrender.com` is on the Public Suffix List, which makes
+`harticfr.onrender.com` and `harticfr-api.onrender.com` two different *sites*.
+An auth cookie set by the API subdomain is therefore a third-party cookie, and
+Safari blocks those outright — login appears to succeed and the user stays on
+the login page, with no cookie stored at all. Proxying keeps the cookie
+first-party.
 
-Getting these wrong is the most likely failure: the browser will report a CORS
-error and login will not persist. `VITE_API_URL` is baked into the JavaScript
-bundle at build time, so changing it requires a redeploy of the static site,
-not just a restart.
+Two consequences to remember:
+
+- **If the API service is ever renamed, update the rewrite destination in
+  `render.yaml`.** Nothing else refers to the API's URL.
+- The frontend sends requests to relative `/api/...` paths whenever
+  `VITE_API_URL` is unset in a production build. Setting that variable points
+  it back at an absolute URL and reintroduces the Safari problem, so leave it
+  unset on Render.
+
+`Cors__AllowedOrigins` on `harticfr-api` is now only a fallback for direct
+cross-origin access; same-origin requests through the proxy need no CORS at all.
 
 ## 4. Load the data
 

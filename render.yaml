@@ -35,12 +35,15 @@ services:
     # /usr/lib/node_modules.
     buildCommand: pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: ./dist
-    envVars:
-      # Baked into the bundle at build time. Must match the API service's real
-      # URL -- if Render assigns a different name, update this and redeploy.
-      - key: VITE_API_URL
-        value: https://harticfr-api.onrender.com
     routes:
+      # Proxy the API under this site's own origin. Calling the API on its own
+      # subdomain makes the auth cookie third-party -- onrender.com is a public
+      # suffix, so the two services are separate sites -- and Safari blocks
+      # third-party cookies outright, which silently breaks login. Must come
+      # before the SPA fallback below.
+      - type: rewrite
+        source: /api/*
+        destination: https://harticfr-api.onrender.com/api/*
       # Client-side routing: everything that is not a real file falls back to index.html.
       - type: rewrite
         source: /*
