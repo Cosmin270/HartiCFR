@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
+using HartiCFR_BE.Configuration;
 using HartiCFR_BE.Data;
 using HartiCFR_BE.Repositories;
 
@@ -12,11 +14,19 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Hosts such as Render inject the database as DATABASE_URL; fall back to the
+// configured connection string for local development.
+var connectionString = DatabaseUrl.ToNpgsqlConnectionString(
+    Environment.GetEnvironmentVariable("DATABASE_URL")
+        ?? builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException(
+            "No database configured. Set DATABASE_URL or ConnectionStrings:DefaultConnection."));
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
+builder.Services.AddScoped<IStationRepository, StationRepository>();
 
 var isDevelopment = builder.Environment.IsDevelopment();
 
@@ -46,11 +56,18 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 
+// Comma-separated list, e.g. Cors__AllowedOrigins=https://harticfr.onrender.com
+var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Select(origin => origin.TrimEnd('/'))
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
         policy.SetIsOriginAllowed(origin =>
-                  new Uri(origin).Host == "localhost")
+                  (isDevelopment && new Uri(origin).Host == "localhost")
+                  || allowedOrigins.Contains(origin.TrimEnd('/'), StringComparer.OrdinalIgnoreCase))
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
@@ -58,15 +75,29 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Managed hosts create an empty database; bring the schema up to date on boot.
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-if (!app.Environment.IsDevelopment())
+// The platform terminates TLS in front of us and forwards plain HTTP, so honour
+// X-Forwarded-Proto instead of redirecting (which would loop).
+var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
-    app.UseHttpsRedirection();
-}
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
+};
+// The proxy address is not known ahead of time on managed hosts.
+forwardedHeadersOptions.KnownIPNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
+
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.UseCors("AllowReactApp");
 app.UseAuthentication();

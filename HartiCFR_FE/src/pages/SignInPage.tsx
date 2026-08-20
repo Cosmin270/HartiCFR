@@ -2,6 +2,7 @@ import AuthLeftPanel from "../components/AuthLeftPanel";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./AuthForm.scss";
+import { apiUrl } from "@/lib/api";
 
 export default function SignInPage() {
     const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function SignInPage() {
         setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:5016/api/auth/register", {
+            const res = await fetch(apiUrl("/api/auth/register"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
