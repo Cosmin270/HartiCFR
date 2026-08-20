@@ -22,6 +22,9 @@
   --surface-2: #f7f9fc;
   --surface-3: #eef2f8;
   --surface-glass: rgba(255, 255, 255, 0.78);
+  /* Sticky chrome that content scrolls underneath: must stay legible even
+     where backdrop-filter is not applied (Safari). */
+  --surface-bar: #ffffff;
 
   --color-foreground: #101828;
   --color-muted: #eef2f8;

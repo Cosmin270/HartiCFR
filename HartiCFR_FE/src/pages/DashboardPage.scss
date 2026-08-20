@@ -68,7 +68,11 @@
   gap: 16px;
   height: 58px;
   padding: 0 clamp(16px, 3vw, 40px);
-  background: var(--surface-glass);
+  /* WebKit does not apply backdrop-filter to this sticky bar, so on Safari
+     the table scrolls visibly through the frosted background. The blur stays
+     as an enhancement where it works, but the base colour is opaque enough to
+     carry the bar on its own. */
+  background: var(--surface-bar);
   backdrop-filter: blur(16px) saturate(1.5);
   -webkit-backdrop-filter: blur(16px) saturate(1.5);
   box-shadow: 0 1px 0 var(--color-border);
