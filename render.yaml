@@ -13,9 +13,8 @@ services:
     plan: free
     region: frankfurt
     rootDir: HartiCFR_BE
-    # Render resolves both of these from the repo root, not from rootDir.
-    dockerfilePath: ./HartiCFR_BE/Dockerfile
-    dockerContext: ./HartiCFR_BE
+    # Resolved relative to rootDir.
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
@@ -31,7 +30,10 @@ services:
     name: harticfr
     runtime: static
     rootDir: HartiCFR_FE
-    buildCommand: npm install -g pnpm@11.10.0 && pnpm install --frozen-lockfile && pnpm build
+    # Render provisions pnpm itself (from the packageManager field) and installs
+    # dependencies before this runs; installing pnpm globally hits a read-only
+    # /usr/lib/node_modules.
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: ./dist
     envVars:
       # Baked into the bundle at build time. Must match the API service's real
