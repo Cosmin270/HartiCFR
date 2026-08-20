@@ -13,7 +13,9 @@ services:
     plan: free
     region: frankfurt
     rootDir: HartiCFR_BE
-    dockerfilePath: ./Dockerfile
+    # Render resolves both of these from the repo root, not from rootDir.
+    dockerfilePath: ./HartiCFR_BE/Dockerfile
+    dockerContext: ./HartiCFR_BE
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
@@ -29,7 +31,7 @@ services:
     name: harticfr
     runtime: static
     rootDir: HartiCFR_FE
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    buildCommand: npm install -g pnpm@11.10.0 && pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: ./dist
     envVars:
       # Baked into the bundle at build time. Must match the API service's real
