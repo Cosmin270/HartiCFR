@@ -35,6 +35,13 @@ services:
     # /usr/lib/node_modules.
     buildCommand: pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: ./dist
+    envVars:
+      # Deliberately relative, not removed: Render keeps env vars that are
+      # deleted from a blueprint, so the old absolute API URL would linger on
+      # the service and get baked into the bundle. "/" normalises to an empty
+      # base, which sends requests to /api on this origin via the rewrite below.
+      - key: VITE_API_URL
+        value: /
     routes:
       # Proxy the API under this site's own origin. Calling the API on its own
       # subdomain makes the auth cookie third-party -- onrender.com is a public

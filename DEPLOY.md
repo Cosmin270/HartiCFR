@@ -39,10 +39,11 @@ Two consequences to remember:
 
 - **If the API service is ever renamed, update the rewrite destination in
   `render.yaml`.** Nothing else refers to the API's URL.
-- The frontend sends requests to relative `/api/...` paths whenever
-  `VITE_API_URL` is unset in a production build. Setting that variable points
-  it back at an absolute URL and reintroduces the Safari problem, so leave it
-  unset on Render.
+- **`VITE_API_URL` is pinned to `/` on Render, and must stay relative.** It is
+  set rather than removed because Render keeps environment variables that are
+  deleted from a blueprint — an absolute API URL left on the service would be
+  baked back into the bundle and break Safari login again. Pointing it at any
+  absolute URL on a different site reintroduces the problem.
 
 `Cors__AllowedOrigins` on `harticfr-api` is now only a fallback for direct
 cross-origin access; same-origin requests through the proxy need no CORS at all.
