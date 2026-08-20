@@ -66,6 +66,7 @@ export default function DashboardPage() {
     const [showCrossings, setShowCrossings] = useState(true);
     const [showStations, setShowStations] = useState(true);
     const [focus, setFocus] = useState<MapFocus>(null);
+    const mapPanelRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -132,6 +133,18 @@ export default function DashboardPage() {
         setRenderedStations(stations.filter((s) => selectedStations.has(s.id)));
         setShowCrossings(true);
         setShowStations(true);
+
+        // Stacked layout: the map lives below the table and is off-screen, so
+        // rendering would look like nothing happened. Bring it into view.
+        if (window.matchMedia("(max-width: 1024px)").matches) {
+            const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            requestAnimationFrame(() => {
+                mapPanelRef.current?.scrollIntoView({
+                    behavior: reduceMotion ? "auto" : "smooth",
+                    block: "start",
+                });
+            });
+        }
     }
 
     function clearLayer(layer: MapLayer) {
@@ -265,7 +278,7 @@ export default function DashboardPage() {
                             />
                         </div>
 
-                        <section className="panel panel--map">
+                        <section className="panel panel--map" ref={mapPanelRef}>
                             <div className="panel__head">
                                 <h2 className="panel__title">
                                     Map

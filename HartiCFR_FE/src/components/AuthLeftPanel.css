@@ -141,3 +141,12 @@
     opacity: 1;
   }
 }
+/* Phone: the decorative panel becomes a compact banner so the form
+   is visible without scrolling. */
+@media (max-width: 480px) {
+  .auth-left {
+    padding: 22px 20px;
+    gap: 14px;
+  }
+  .auth-left__decor { opacity: 0.22; }
+}

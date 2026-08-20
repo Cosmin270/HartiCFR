@@ -565,6 +565,7 @@
 
   .panel--map {
     position: static;
+    scroll-margin-top: 74px;
   }
 
   .log-table-wrap {
@@ -883,19 +884,270 @@
   50% { transform: translateY(-7px); }
 }
 
+/* ── Phone layout ───────────────────────────────────────────
+   The dashboard is a two-pane desktop tool: a wide table beside a
+   map. On a phone neither can have the space it wants, so the panes
+   stack, the table keeps its horizontal scroll (a 15-column table
+   cannot usefully reflow) with the checkbox column pinned so rows
+   stay selectable while scrolled sideways, and every control grows
+   to a 44px touch target.
+   ───────────────────────────────────────────────────────────── */
+
 @media (max-width: 640px) {
+  .dashboard__body {
+    padding: 14px 14px 28px;
+  }
+
   .appbar {
     height: auto;
     min-height: 58px;
     flex-wrap: wrap;
     padding-top: 8px;
     padding-bottom: 8px;
+    gap: 10px;
   }
 
   .appbar__tabs {
     order: 3;
     width: 100%;
+    justify-content: stretch;
+  }
+
+  .appbar__tab {
+    flex: 1 1 0;
     justify-content: center;
+    min-height: 40px;
+    padding: 0 10px;
+    font-size: 0.8rem;
+  }
+
+  .appbar__logout {
+    min-height: 40px;
+    min-width: 40px;
+    padding: 0 12px;
+  }
+
+  .dashboard__head {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .dashboard__title {
+    font-size: 1.35rem;
+  }
+
+  /* Three stat cards do not fit side by side; let them share the row
+     evenly rather than wrapping one card onto a lonely second line. */
+  .stat-row {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .stat {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 10px 10px 9px;
+  }
+
+  .stat__value {
+    font-size: 1.25rem;
+  }
+
+  .stat__label {
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+  }
+
+  .dashboard__grid {
+    gap: 14px;
+  }
+
+  /* scrollIntoView must clear the sticky app bar, which is taller here
+     because the dataset tabs wrap onto their own row. */
+  .panel--map {
+    scroll-margin-top: 118px;
+  }
+
+  /* Panel header: title on one line, actions on the next, full width. */
+  .panel__head {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .panel__actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .panel__actions .btn-render {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .panel__actions .btn-clear {
+    flex: 1 1 auto;
+    min-height: 44px;
+  }
+
+  .layer-legend {
+    width: 100%;
+  }
+
+  .layer-chip__toggle {
+    min-height: 40px;
+  }
+
+  .layer-chip__clear {
+    min-width: 40px;
+  }
+
+  .panel__empty {
+    min-height: 260px;
+    padding: 24px 20px;
+    gap: 12px;
+
+    svg {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  .geo-map__canvas {
+    height: 62dvh;
+    min-height: 320px;
+  }
+
+  .log-table-wrap {
+    max-height: 58dvh;
+    /* Momentum scrolling, and keep vertical page scroll available. */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .log-table {
+    font-size: 0.78rem;
+
+    th,
+    td {
+      padding: 8px 10px;
+    }
+
+    /* Pin the select column so rows can be ticked while scrolled right.
+       Kept narrow: every pixel here is stolen from the data. */
+    .check {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      /* Auto table layout equalises columns once the table outgrows the
+         viewport, so width alone is ignored; min/max pin it. */
+      width: 36px;
+      min-width: 36px;
+      max-width: 36px;
+      padding-left: 6px;
+      padding-right: 6px;
+      background: var(--surface-1);
+      box-shadow: 1px 0 0 var(--color-border);
+    }
+
+    tbody tr:nth-child(even) .check {
+      background: #f4f6f9;
+    }
+
+    tbody tr.is-selected .check {
+      background: #dff3f0;
+    }
+
+    tbody tr.is-focused .check {
+      background: #fdf0da;
+    }
+
+    thead tr.head-labels th.check,
+    thead tr.head-filters th.check {
+      z-index: 4;
+    }
+
+    /* Comfortable tap targets for the checkboxes themselves. Row
+       checkboxes sit inside a 44px row that is clickable end to end,
+       so the box itself only has to be easy to hit, not 44px wide. */
+    .check input {
+      width: 22px;
+      height: 22px;
+    }
+
+    thead tr.head-filters th.check input {
+      /* min-width is reset explicitly: the filter-input sizing below
+         would otherwise stretch this checkbox out of its column. */
+      width: 24px;
+      min-width: 0;
+      height: 24px;
+    }
+
+    tbody td {
+      /* A tapped row is a 44px-tall target. */
+      height: 44px;
+    }
+  }
+}
+
+/* Very narrow phones: reclaim the last of the horizontal space. */
+@media (max-width: 380px) {
+  .appbar__wordmark {
+    font-size: 1rem;
+  }
+
+  .appbar__logout {
+    /* Icon-only; the label is redundant next to a familiar glyph. */
+    font-size: 0;
+    gap: 0;
+    padding: 0 12px;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .stat {
+    padding: 9px 8px;
+  }
+}
+
+/* Touch devices at any width: remove hover-only affordances that
+   stick on tap, and kill the 300ms tap delay. */
+@media (hover: none) {
+  .stat:hover,
+  .panel:hover,
+  .btn-render:hover:not(:disabled),
+  .btn-clear:hover,
+  .appbar__logout:hover {
+    transform: none;
+  }
+
+  .appbar__tab,
+  .appbar__logout,
+  .btn-render,
+  .btn-clear,
+  .layer-chip__toggle,
+  .layer-chip__clear,
+  .log-table tbody tr {
+    touch-action: manipulation;
+  }
+
+  /* iOS Safari zooms the whole page when a focused input's text is
+     smaller than 16px. The column filters were 12px, which made every
+     tap on a filter yank the layout around. 16px keeps focus put, and
+     the taller box is a better touch target anyway. */
+  .log-table thead tr.head-filters th {
+    input,
+    select {
+      height: 40px;
+      font-size: 16px;
+      /* Narrower than the desktop default so 15 columns of filters do
+         not stretch the scroll width any further than necessary. */
+      min-width: 64px;
+    }
   }
 }
 

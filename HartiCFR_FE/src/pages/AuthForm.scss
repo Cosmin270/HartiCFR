@@ -321,3 +321,47 @@ $field-height: 48px;
     padding: 32px 24px;
   }
 }
+/* Phone: the card stops pretending to be a card and uses the full
+   width, so the 48px fields get every pixel available. */
+@media (max-width: 480px) {
+  .auth-page__right {
+    padding: 24px 16px 36px;
+  }
+
+  .auth-card {
+    padding: 26px 20px;
+    border-radius: var(--rad-md);
+  }
+
+  .auth-card__header {
+    margin-bottom: 24px;
+  }
+
+  .auth-card__title {
+    font-size: 1.55rem;
+  }
+
+  .auth-card__subtitle {
+    font-size: 0.92rem;
+  }
+
+  .auth-form {
+    gap: 18px;
+  }
+}
+
+/* Touch devices: grow the two controls that sit below a comfortable
+   tap size. The reveal button keeps its 36px visual box and gains the
+   extra area invisibly, so the field's look is unchanged. */
+@media (hover: none) {
+  .auth-field__toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .auth-switch button {
+    display: inline-block;
+    padding: 11px 6px;
+    margin: -11px 0 -11px 2px;
+  }
+}
