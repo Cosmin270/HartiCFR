@@ -1,20 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Log } from "../types/log";
-import LogMap from "../components/LogMap";
+import type { Station } from "../types/station";
+import DataPanel, { type ColumnDef } from "../components/DataPanel";
+import GeoMap, { type MapFocus, type MapLayer } from "../components/GeoMap";
 import "./DashboardPage.scss";
+import { apiUrl } from "@/lib/api";
 
-type ColumnFilter = "text" | "select";
-
-interface Column {
-    key: string;
-    label: string;
-    filter: ColumnFilter;
-    num?: boolean;
-    get: (log: Log) => string | number | undefined;
-}
-
-const COLUMNS: Column[] = [
+const LOG_COLUMNS: ColumnDef<Log>[] = [
     { key: "id", label: "ID", filter: "text", num: true, get: (l) => l.id },
     { key: "srcf", label: "SRCF", filter: "text", get: (l) => l.srcf },
     { key: "ct", label: "Sectia CT", filter: "text", get: (l) => l.ct },
@@ -31,42 +24,77 @@ const COLUMNS: Column[] = [
     { key: "y", label: "Latitudine", filter: "text", num: true, get: (l) => l.position?.y },
 ];
 
-const EMPTY_FILTERS: Record<string, string> = Object.fromEntries(
-    COLUMNS.map((c) => [c.key, ""])
-);
+const STATION_COLUMNS: ColumnDef<Station>[] = [
+    { key: "id", label: "ID", filter: "text", num: true, get: (s) => s.id },
+    { key: "cod", label: "Cod", filter: "text", num: true, get: (s) => s.cod },
+    { key: "name", label: "Nume statie", filter: "text", get: (s) => s.name },
+    { key: "x", label: "Longitudine", filter: "text", num: true, get: (s) => s.position?.x },
+    { key: "y", label: "Latitudine", filter: "text", num: true, get: (s) => s.position?.y },
+];
+
+const TABS: { key: MapLayer; label: string }[] = [
+    { key: "crossings", label: "Treceri la nivel" },
+    { key: "stations", label: "Statii" },
+];
+
+function toggleInSet(prev: Set<number>, id: number): Set<number> {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+}
+
+function setManyInSet(prev: Set<number>, ids: number[], select: boolean): Set<number> {
+    const next = new Set(prev);
+    ids.forEach((id) => (select ? next.add(id) : next.delete(id)));
+    return next;
+}
 
 export default function DashboardPage() {
     const navigate = useNavigate();
+    const [tab, setTab] = useState<MapLayer>("crossings");
+
     const [logs, setLogs] = useState<Log[]>([]);
+    const [stations, setStations] = useState<Station[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const [filters, setFilters] = useState<Record<string, string>>(EMPTY_FILTERS);
-    const [selected, setSelected] = useState<Set<number>>(new Set());
-    const [rendered, setRendered] = useState<Log[]>([]);
-    const [focusId, setFocusId] = useState<number | null>(null);
+    const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set());
+    const [selectedStations, setSelectedStations] = useState<Set<number>>(new Set());
+    const [renderedLogs, setRenderedLogs] = useState<Log[]>([]);
+    const [renderedStations, setRenderedStations] = useState<Station[]>([]);
+    const [showCrossings, setShowCrossings] = useState(true);
+    const [showStations, setShowStations] = useState(true);
+    const [focus, setFocus] = useState<MapFocus>(null);
 
     useEffect(() => {
         let cancelled = false;
 
         async function load() {
             try {
-                const res = await fetch("http://localhost:5016/api/Log/logs", {
-                    credentials: "include",
-                });
+                const [logsRes, stationsRes] = await Promise.all([
+                    fetch(apiUrl("/api/Log/logs"), { credentials: "include" }),
+                    fetch(apiUrl("/api/Station/stations"), { credentials: "include" }),
+                ]);
 
-                if (res.status === 401) {
+                if (logsRes.status === 401 || stationsRes.status === 401) {
                     navigate("/login");
                     return;
                 }
-                if (!res.ok) {
-                    throw new Error(`Server responded with ${res.status}`);
+                if (!logsRes.ok || !stationsRes.ok) {
+                    throw new Error(`Server responded with ${logsRes.status}/${stationsRes.status}`);
                 }
 
-                const data: Log[] = await res.json();
-                if (!cancelled) setLogs(data);
+                const [logsData, stationsData]: [Log[], Station[]] = await Promise.all([
+                    logsRes.json(),
+                    stationsRes.json(),
+                ]);
+                if (!cancelled) {
+                    setLogs(logsData);
+                    setStations(stationsData);
+                }
             } catch (err) {
-                if (!cancelled) setError("Could not load logs. Is the server running?");
+                if (!cancelled) setError("Could not load data. Is the server running?");
                 console.error(err);
             } finally {
                 if (!cancelled) setLoading(false);
@@ -79,69 +107,42 @@ export default function DashboardPage() {
         };
     }, [navigate]);
 
-    const selectOptions = useMemo(() => {
-        const map: Record<string, string[]> = {};
-        for (const col of COLUMNS) {
-            if (col.filter !== "select") continue;
-            const values = new Set<string>();
-            for (const log of logs) {
-                const v = col.get(log);
-                if (v !== undefined && v !== null && v !== "") values.add(String(v));
-            }
-            map[col.key] = Array.from(values).sort();
-        }
-        return map;
-    }, [logs]);
+    // Refs mirror the latest selection so the toggle callbacks below can stay
+    // referentially stable (empty deps). Stable callbacks are what let the
+    // memoized table rows skip re-rendering on every click.
+    const selectedLogsRef = useRef(selectedLogs);
+    selectedLogsRef.current = selectedLogs;
+    const selectedStationsRef = useRef(selectedStations);
+    selectedStationsRef.current = selectedStations;
 
-    const filtered = useMemo(() => {
-        return logs.filter((log) =>
-            COLUMNS.every((col) => {
-                const q = filters[col.key];
-                if (!q) return true;
-                const raw = col.get(log);
-                const val = raw === undefined || raw === null ? "" : String(raw);
-                return col.filter === "select"
-                    ? val === q
-                    : val.toLowerCase().includes(q.toLowerCase());
-            })
-        );
-    }, [logs, filters]);
+    const toggleLogRow = useCallback((id: number) => {
+        const wasSelected = selectedLogsRef.current.has(id);
+        setSelectedLogs((prev) => toggleInSet(prev, id));
+        setFocus(wasSelected ? null : { layer: "crossings", id });
+    }, []);
 
-    const anyFilterActive = Object.values(filters).some((v) => v !== "");
-    const filteredIds = useMemo(() => filtered.map((l) => l.id), [filtered]);
-    const allSelected =
-        filtered.length > 0 && filteredIds.every((id) => selected.has(id));
-    function setFilter(key: string, value: string) {
-        setFilters((prev) => ({ ...prev, [key]: value }));
+    const toggleStationRow = useCallback((id: number) => {
+        const wasSelected = selectedStationsRef.current.has(id);
+        setSelectedStations((prev) => toggleInSet(prev, id));
+        setFocus(wasSelected ? null : { layer: "stations", id });
+    }, []);
+
+    function renderAll() {
+        setRenderedLogs(logs.filter((l) => selectedLogs.has(l.id)));
+        setRenderedStations(stations.filter((s) => selectedStations.has(s.id)));
+        setShowCrossings(true);
+        setShowStations(true);
     }
 
-    function toggleRow(id: number) {
-        const wasSelected = selected.has(id);
-        setSelected((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-        setFocusId(wasSelected ? null : id);
-    }
-
-    function toggleAll() {
-        setSelected((prev) => {
-            const next = new Set(prev);
-            if (allSelected) filteredIds.forEach((id) => next.delete(id));
-            else filteredIds.forEach((id) => next.add(id));
-            return next;
-        });
-    }
-
-    function handleRender() {
-        setRendered(logs.filter((l) => selected.has(l.id)));
+    function clearLayer(layer: MapLayer) {
+        if (layer === "crossings") setRenderedLogs([]);
+        else setRenderedStations([]);
+        setFocus(null);
     }
 
     async function handleLogout() {
         try {
-            await fetch("http://localhost:5016/api/auth/logout", {
+            await fetch(apiUrl("/api/auth/logout"), {
                 method: "POST",
                 credentials: "include",
             });
@@ -151,6 +152,13 @@ export default function DashboardPage() {
         navigate("/login");
     }
 
+    const visibleCrossings = showCrossings ? renderedLogs : [];
+    const visibleStations = showStations ? renderedStations : [];
+    const plottedCount = renderedLogs.length + renderedStations.length;
+    const activeRecords = tab === "crossings" ? logs.length : stations.length;
+    const activeSelected = tab === "crossings" ? selectedLogs.size : selectedStations.size;
+    const totalSelected = selectedLogs.size + selectedStations.size;
+
     return (
         <div className="dashboard">
             <header className="appbar">
@@ -158,6 +166,32 @@ export default function DashboardPage() {
                     <img src="/logo.png" alt="" className="appbar__logo" />
                     <span className="appbar__wordmark">Harti CFR</span>
                 </div>
+
+                <nav className="appbar__tabs" role="tablist" aria-label="Datasets">
+                    {TABS.map((t) => (
+                        <button
+                            key={t.key}
+                            type="button"
+                            role="tab"
+                            aria-selected={tab === t.key}
+                            className={`appbar__tab${tab === t.key ? " is-active" : ""}`}
+                            onClick={() => setTab(t.key)}
+                        >
+                            {t.key === "crossings" ? (
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                    <path d="M7 3v18M17 3v18M7 8h10M7 16h10" />
+                                </svg>
+                            ) : (
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                    <path d="M4 21V9l8-6 8 6v12" />
+                                    <path d="M9 21v-6h6v6" />
+                                </svg>
+                            )}
+                            {t.label}
+                        </button>
+                    ))}
+                </nav>
+
                 <button type="button" className="appbar__logout" onClick={handleLogout}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -169,18 +203,22 @@ export default function DashboardPage() {
 
             <main className="dashboard__body">
                 <div className="dashboard__head">
-                    <h1 className="dashboard__title">Treceri la nivel</h1>
+                    <h1 className="dashboard__title">
+                        {tab === "crossings" ? "Treceri la nivel" : "Statii"}
+                    </h1>
                     <div className="stat-row">
                         <div className="stat">
-                            <span className="stat__value">{loading ? "—" : logs.length}</span>
+                            <span className="stat__value">{loading ? "—" : activeRecords}</span>
                             <span className="stat__label">Records</span>
                         </div>
                         <div className="stat">
-                            <span className="stat__value">{selected.size}</span>
-                            <span className="stat__label">Selected</span>
+                            <span className="stat__value">{totalSelected}</span>
+                            <span className="stat__label">
+                                Selected{totalSelected > activeSelected ? ` (${activeSelected} here)` : ""}
+                            </span>
                         </div>
                         <div className="stat stat--accent">
-                            <span className="stat__value">{rendered.length}</span>
+                            <span className="stat__value">{plottedCount}</span>
                             <span className="stat__label">Plotted</span>
                         </div>
                     </div>
@@ -190,169 +228,105 @@ export default function DashboardPage() {
 
                 {!error && (
                     <div className="dashboard__grid">
-                        <section className="panel panel--table">
-                            <div className="panel__head">
-                                <h2 className="panel__title">
-                                    Crossings
-                                    <span className="panel__meta">
-                                        {loading
-                                            ? "Loading…"
-                                            : anyFilterActive
-                                              ? `${filtered.length} of ${logs.length} rows`
-                                              : `${logs.length} rows`}
-                                    </span>
-                                </h2>
-                                <div className="panel__actions">
-                                    {anyFilterActive && (
-                                        <button
-                                            type="button"
-                                            className="btn-clear"
-                                            onClick={() => setFilters(EMPTY_FILTERS)}
-                                        >
-                                            Clear filters
-                                        </button>
-                                    )}
-                                    {selected.size > 0 && (
-                                        <button
-                                            type="button"
-                                            className="btn-clear"
-                                            onClick={() => setSelected(new Set())}
-                                        >
-                                            Clear selection
-                                        </button>
-                                    )}
-                                    <button
-                                        type="button"
-                                        className="btn-render"
-                                        onClick={handleRender}
-                                        disabled={selected.size === 0}
-                                    >
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                            <path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z" />
-                                            <circle cx="12" cy="10" r="2.5" />
-                                        </svg>
-                                        Render {selected.size > 0 ? `(${selected.size})` : ""}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="log-table-wrap">
-                                <table className="log-table">
-                                    <thead>
-                                        <tr className="head-labels">
-                                            <th className="check" aria-hidden="true" />
-                                            {COLUMNS.map((col) => (
-                                                <th key={col.key} className={col.num ? "num" : undefined}>
-                                                    {col.label}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                        <tr className="head-filters">
-                                            <th className="check">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={allSelected}
-                                                    onChange={toggleAll}
-                                                    aria-label="Select all filtered rows"
-                                                    disabled={loading || filtered.length === 0}
-                                                />
-                                            </th>
-                                            {COLUMNS.map((col) => (
-                                                <th key={col.key}>
-                                                    {col.filter === "select" ? (
-                                                        <select
-                                                            value={filters[col.key]}
-                                                            onChange={(e) => setFilter(col.key, e.target.value)}
-                                                            aria-label={`Filter ${col.label}`}
-                                                            disabled={loading}
-                                                        >
-                                                            <option value="">All</option>
-                                                            {selectOptions[col.key]?.map((opt) => (
-                                                                <option key={opt} value={opt}>
-                                                                    {opt}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    ) : (
-                                                        <input
-                                                            type="text"
-                                                            value={filters[col.key]}
-                                                            onChange={(e) => setFilter(col.key, e.target.value)}
-                                                            placeholder="Filter…"
-                                                            aria-label={`Filter ${col.label}`}
-                                                            disabled={loading}
-                                                        />
-                                                    )}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {loading &&
-                                            Array.from({ length: 12 }).map((_, i) => (
-                                                <tr key={`sk-${i}`} className="skeleton-row">
-                                                    <td className="check" />
-                                                    {COLUMNS.map((col) => (
-                                                        <td key={col.key}>
-                                                            <span className="skeleton" />
-                                                        </td>
-                                                    ))}
-                                                </tr>
-                                            ))}
-
-                                        {!loading &&
-                                            filtered.map((log) => {
-                                                const isSel = selected.has(log.id);
-                                                return (
-                                                    <tr
-                                                        key={log.id}
-                                                        className={isSel ? "is-selected" : undefined}
-                                                        onClick={() => toggleRow(log.id)}
-                                                    >
-                                                        <td className="check">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isSel}
-                                                                onChange={() => toggleRow(log.id)}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                aria-label={`Select row ${log.id}`}
-                                                            />
-                                                        </td>
-                                                        {COLUMNS.map((col) => (
-                                                            <td key={col.key} className={col.num ? "num" : undefined}>
-                                                                {col.get(log)}
-                                                            </td>
-                                                        ))}
-                                                    </tr>
-                                                );
-                                            })}
-
-                                        {!loading && filtered.length === 0 && (
-                                            <tr>
-                                                <td colSpan={COLUMNS.length + 1} className="log-table__empty">
-                                                    {logs.length === 0
-                                                        ? "No records found."
-                                                        : "No rows match the current filters."}
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </section>
+                        <div className="dashboard__tables">
+                            <DataPanel
+                                title="Crossings"
+                                columns={LOG_COLUMNS}
+                                rows={logs}
+                                loading={loading}
+                                emptyText="No crossings found."
+                                selected={selectedLogs}
+                                focusedId={focus?.layer === "crossings" ? focus.id : null}
+                                onToggleRow={toggleLogRow}
+                                onSelectMany={(ids, select) =>
+                                    setSelectedLogs((prev) => setManyInSet(prev, ids, select))
+                                }
+                                onClearSelection={() => setSelectedLogs(new Set())}
+                                onRender={renderAll}
+                                renderCount={totalSelected}
+                                hidden={tab !== "crossings"}
+                            />
+                            <DataPanel
+                                title="Stations"
+                                columns={STATION_COLUMNS}
+                                rows={stations}
+                                loading={loading}
+                                emptyText="No stations found."
+                                selected={selectedStations}
+                                focusedId={focus?.layer === "stations" ? focus.id : null}
+                                onToggleRow={toggleStationRow}
+                                onSelectMany={(ids, select) =>
+                                    setSelectedStations((prev) => setManyInSet(prev, ids, select))
+                                }
+                                onClearSelection={() => setSelectedStations(new Set())}
+                                onRender={renderAll}
+                                renderCount={totalSelected}
+                                hidden={tab !== "stations"}
+                            />
+                        </div>
 
                         <section className="panel panel--map">
                             <div className="panel__head">
                                 <h2 className="panel__title">
                                     Map
                                     <span className="panel__meta">
-                                        {rendered.length > 0 ? `${rendered.length} plotted` : "empty"}
+                                        {plottedCount > 0 ? `${plottedCount} plotted` : "empty"}
                                     </span>
                                 </h2>
+                                <div className="layer-legend" aria-label="Map layers">
+                                    <div className="layer-chip layer-chip--crossings">
+                                        <button
+                                            type="button"
+                                            className={`layer-chip__toggle${showCrossings ? "" : " is-off"}`}
+                                            onClick={() => setShowCrossings((v) => !v)}
+                                            aria-pressed={showCrossings}
+                                            title={showCrossings ? "Hide crossings layer" : "Show crossings layer"}
+                                        >
+                                            <span className="layer-chip__dot" />
+                                            Treceri
+                                            <span className="layer-chip__count">{renderedLogs.length}</span>
+                                        </button>
+                                        {renderedLogs.length > 0 && (
+                                            <button
+                                                type="button"
+                                                className="layer-chip__clear"
+                                                onClick={() => clearLayer("crossings")}
+                                                aria-label="Remove crossings from map"
+                                                title="Remove crossings from map"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="layer-chip layer-chip--stations">
+                                        <button
+                                            type="button"
+                                            className={`layer-chip__toggle${showStations ? "" : " is-off"}`}
+                                            onClick={() => setShowStations((v) => !v)}
+                                            aria-pressed={showStations}
+                                            title={showStations ? "Hide stations layer" : "Show stations layer"}
+                                        >
+                                            <span className="layer-chip__dot" />
+                                            Statii
+                                            <span className="layer-chip__count">{renderedStations.length}</span>
+                                        </button>
+                                        {renderedStations.length > 0 && (
+                                            <button
+                                                type="button"
+                                                className="layer-chip__clear"
+                                                onClick={() => clearLayer("stations")}
+                                                aria-label="Remove stations from map"
+                                                title="Remove stations from map"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="map-swap">
-                                <div className={`map-swap__layer${rendered.length > 0 ? " is-hidden" : ""}`}>
+                                <div className={`map-swap__layer${plottedCount > 0 ? " is-hidden" : ""}`}>
                                     <div className="panel__empty">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
                                             <path d="M9 6 3 4v14l6 2 6-2 6 2V6l-6-2-6 2Z" />
@@ -360,12 +334,17 @@ export default function DashboardPage() {
                                         </svg>
                                         <p>
                                             Select rows and press <strong>Render</strong> to plot them here.
+                                            Crossings and stations can be plotted together.
                                         </p>
                                     </div>
                                 </div>
-                                {rendered.length > 0 && (
+                                {plottedCount > 0 && (
                                     <div className="map-swap__layer map-swap__layer--in">
-                                        <LogMap points={rendered} focusId={focusId} />
+                                        <GeoMap
+                                            crossings={visibleCrossings}
+                                            stations={visibleStations}
+                                            focus={focus}
+                                        />
                                     </div>
                                 )}
                             </div>

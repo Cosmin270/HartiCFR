@@ -3,8 +3,10 @@
   flex: 1 1 50%;
   min-width: 0;
   overflow: hidden;
-  background: var(--gradient-panel);
-  color: var(--color-panel-foreground);
+  background: var(--gradient-hero);
+  background-size: 160% 160%;
+  animation: gradient-drift 14s ease-in-out infinite;
+  color: #fff;
   padding: 56px 56px 40px;
   display: flex;
   flex-direction: column;
@@ -16,25 +18,48 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.5;
+  opacity: 0.55;
   pointer-events: none;
 }
 
 .auth-left__decor .line {
   fill: none;
-  stroke-width: 3;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: rail-draw 2.4s var(--ease-out) forwards;
 }
 
-.auth-left__decor .line--a { stroke: var(--color-primary); }
-.auth-left__decor .line--b { stroke: var(--color-secondary); }
-.auth-left__decor .line--c { stroke: var(--color-accent); opacity: 0.7; }
+.auth-left__decor .line--a {
+  stroke: #99f6e4;
+}
+.auth-left__decor .line--b {
+  stroke: #a5f3fc;
+  animation-delay: 0.3s;
+}
+.auth-left__decor .line--c {
+  stroke: #ddd6fe;
+  opacity: 0.85;
+  animation-delay: 0.6s;
+}
 
 .auth-left__decor .stop {
-  fill: var(--color-panel);
+  fill: #0f766e;
   stroke: #fff;
-  stroke-width: 3;
+  stroke-width: 2.5;
+  opacity: 0;
+  animation: stop-in 0.5s var(--ease-spring) 1.6s forwards;
+}
+
+@keyframes rail-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes stop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .auth-left__brand {
@@ -48,16 +73,22 @@
   width: 48px;
   height: 48px;
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
   padding: 6px;
+  box-shadow: 0 8px 24px rgba(4, 47, 46, 0.35);
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.auth-left__logo:hover {
+  transform: rotate(-6deg) scale(1.08);
 }
 
 .auth-left__wordmark {
   font-family: var(--font-head);
   font-weight: 700;
   font-size: 1.4rem;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: #fff;
 }
 
@@ -68,11 +99,13 @@
 
 .auth-left__title {
   font-family: var(--font-head);
-  font-weight: 600;
-  font-size: clamp(2rem, 3.2vw, 2.75rem);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
   color: #fff;
+  text-shadow: 0 2px 24px rgba(4, 47, 46, 0.3);
+  animation: fade-up var(--dur-slow) var(--ease-out) 0.15s both;
 }
 
 .auth-left__subtitle {
@@ -80,7 +113,8 @@
   max-width: 42ch;
   font-size: 1.05rem;
   line-height: 1.6;
-  color: var(--color-panel-muted);
+  color: rgba(255, 255, 255, 0.85);
+  animation: fade-up var(--dur-slow) var(--ease-out) 0.3s both;
 }
 
 @media (max-width: 860px) {
@@ -89,7 +123,21 @@
     padding: 32px 28px;
     gap: 20px;
   }
-  .auth-left__decor { opacity: 0.3; }
+  .auth-left__decor { opacity: 0.35; }
   .auth-left__content { margin-top: 8px; }
   .auth-left__subtitle { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-left {
+    animation: none;
+  }
+  .auth-left__decor .line {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .auth-left__decor .stop {
+    animation: none;
+    opacity: 1;
+  }
 }

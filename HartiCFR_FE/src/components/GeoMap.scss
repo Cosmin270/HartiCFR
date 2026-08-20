@@ -1,0 +1,163 @@
+.geo-map {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  &__canvas {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    z-index: 0;
+    background: var(--surface-3);
+  }
+
+  &__note {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    color: #92400e;
+    background: #fffbeb;
+    border-bottom: 1px solid #fde68a;
+    animation: fade-up var(--dur-base) var(--ease-out) both;
+  }
+
+  &__tip {
+    font-family: var(--font-body);
+    min-width: 190px;
+
+    &-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-head);
+      font-size: 0.85rem;
+      color: var(--color-foreground);
+      margin-bottom: 6px;
+    }
+
+    &-dot {
+      flex: 0 0 auto;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+
+      &--crossings {
+        background: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18);
+      }
+
+      &--stations {
+        background: var(--color-stations);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.16);
+      }
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.78rem;
+      color: var(--color-foreground);
+      font-variant-numeric: tabular-nums;
+
+      span {
+        color: var(--color-muted-foreground);
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+/* Frosted-glass tooltip chrome */
+.leaflet-tooltip {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  color: var(--color-foreground);
+}
+
+.leaflet-tooltip.leaflet-tooltip-top {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--rad-sm);
+  box-shadow: var(--shadow-pop);
+}
+
+/* Leaflet controls, matched to the design system */
+.leaflet-control-zoom {
+  border: 1px solid var(--color-border-strong) !important;
+  border-radius: var(--rad-sm) !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-card) !important;
+
+  a {
+    background: #fff !important;
+    color: var(--color-foreground) !important;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+
+    &:hover {
+      background: var(--surface-3) !important;
+      color: var(--color-primary) !important;
+    }
+  }
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(6px);
+
+  a {
+    color: var(--color-primary) !important;
+  }
+}
+
+.map-marker {
+  animation: marker-in 300ms var(--ease-out) both;
+  transition: box-shadow 200ms var(--ease-out);
+}
+
+.map-marker--focused {
+  animation: marker-in 300ms var(--ease-out) both,
+    marker-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes marker-in {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes marker-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
+  50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-marker,
+  .map-marker--focused {
+    animation: none;
+  }
+}
+
+/* Cluster badges, matched to the design system */
+.map-cluster > div {
+  animation: marker-in 250ms var(--ease-out) both;
+  transition: transform 150ms var(--ease-out);
+}
+
+.leaflet-marker-cluster:hover .map-cluster > div {
+  transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-cluster > div {
+    animation: none;
+  }
+}

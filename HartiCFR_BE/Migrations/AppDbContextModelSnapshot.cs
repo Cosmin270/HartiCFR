@@ -95,6 +95,37 @@ namespace HartiCFR_BE.Migrations
                     b.ToTable("Logs");
                 });
 
+            modelBuilder.Entity("HartiCFR_BE.Models.Station", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cod")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Position", "HartiCFR_BE.Models.Station.Position#Position", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<double>("x")
+                                .HasColumnType("double precision");
+
+                            b1.Property<double>("y")
+                                .HasColumnType("double precision");
+                        });
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Stations");
+                });
+
             modelBuilder.Entity("HartiCFR_BE.Models.User", b =>
                 {
                     b.Property<int>("Id")

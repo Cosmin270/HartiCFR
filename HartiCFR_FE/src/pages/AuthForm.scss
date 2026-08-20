@@ -1,12 +1,8 @@
 $field-height: 48px;
-$field-radius: var(--radius-sm);
-$brand: #00adb5;
-$focus-ring: 0 0 0 3px rgba($brand, 0.18);
 
 .auth-page {
   display: flex;
   min-height: 100dvh;
-  background: var(--gradient-app);
 
   &__right {
     flex: 1 1 50%;
@@ -20,26 +16,38 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
 
 .auth-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 424px;
   display: flex;
   flex-direction: column;
+  padding: 40px 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--rad-lg);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: var(--shadow-pop);
+  animation: fade-up var(--dur-slow) var(--ease-out) both;
 
   &__header {
-    margin-bottom: 36px;
+    margin-bottom: 32px;
   }
 
   &__title {
     font-family: var(--font-head);
-    font-weight: 600;
-    font-size: 1.9rem;
-    letter-spacing: -0.02em;
-    color: var(--color-foreground);
+    font-weight: 700;
+    font-size: 1.85rem;
+    letter-spacing: -0.03em;
+    background: var(--gradient-brand-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
   }
 
   &__subtitle {
     margin-top: 8px;
     color: var(--color-muted-foreground);
-    font-size: 1rem;
+    font-size: 0.98rem;
     line-height: 1.5;
   }
 }
@@ -47,7 +55,7 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 22px;
   width: 100%;
 
   .btn {
@@ -59,9 +67,13 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
   display: flex;
   flex-direction: column;
   gap: 8px;
+  animation: fade-up var(--dur-slow) var(--ease-out) both;
+
+  &:nth-child(1) { animation-delay: 90ms; }
+  &:nth-child(2) { animation-delay: 160ms; }
 
   &__label {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--color-foreground);
   }
@@ -79,6 +91,12 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
     height: 18px;
     color: var(--color-muted-foreground);
     pointer-events: none;
+    transition: color var(--dur-fast) ease, transform var(--dur-base) var(--ease-spring);
+  }
+
+  &__control:focus-within &__icon {
+    color: var(--color-primary);
+    transform: scale(1.08);
   }
 
   input {
@@ -86,26 +104,26 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
     box-sizing: border-box;
     height: $field-height;
     padding: 0 14px 0 42px;
-    border: 1.5px solid var(--color-border);
-    border-radius: $field-radius;
+    border: 1.5px solid var(--color-border-strong);
+    border-radius: var(--rad-sm);
     background: #fff;
     color: var(--color-foreground);
     font-family: var(--font-body);
     font-size: 1rem;
-    transition: border-color 160ms ease, box-shadow 160ms ease;
+    transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
 
     &::placeholder {
       color: #94a3b8;
     }
 
     &:hover {
-      border-color: #9fd9dd;
+      border-color: rgba(13, 148, 136, 0.45);
     }
 
     &:focus {
       outline: none;
-      border-color: var(--color-ring);
-      box-shadow: $focus-ring;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.13);
     }
   }
 
@@ -120,18 +138,18 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
     border: none;
     background: transparent;
     color: var(--color-muted-foreground);
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: color 160ms ease, background 160ms ease;
+    transition: color var(--dur-fast) ease, background var(--dur-fast) ease;
 
     &:hover {
       color: var(--color-foreground);
-      background: var(--color-muted);
+      background: var(--surface-3);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 3px rgba($brand, 0.25);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.25);
     }
 
     svg {
@@ -146,12 +164,13 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: $field-radius;
+  border-radius: var(--rad-sm);
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: var(--color-destructive);
   font-size: 0.9rem;
   line-height: 1.4;
+  animation: fade-up var(--dur-base) var(--ease-out) both;
 
   svg {
     flex-shrink: 0;
@@ -161,6 +180,8 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
 }
 
 .btn {
+  position: relative;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -169,21 +190,25 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
   min-height: $field-height;
   padding: 0 18px;
   border: 1.5px solid transparent;
-  border-radius: $field-radius;
+  border-radius: var(--rad-sm);
   font-family: var(--font-head);
-  font-weight: 600;
+  font-weight: 650;
   font-size: 1rem;
   cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease,
-    color 160ms ease, transform 80ms ease;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
 
   &:active {
-    transform: scale(0.99);
+    transform: scale(0.98);
   }
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba($brand, 0.35);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
   }
 
   &:disabled {
@@ -194,21 +219,39 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
   &--primary {
     background: var(--gradient-primary);
     color: var(--color-on-primary);
-    box-shadow: 0 8px 20px -8px rgba($brand, 0.6);
+    box-shadow: var(--glow-primary);
+
+    /* shine sweep */
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -60%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transform: skewX(-20deg);
+      transition: left 500ms var(--ease-out);
+    }
 
     &:hover:not(:disabled) {
-      background: var(--gradient-primary-hover);
+      box-shadow: 0 14px 30px -10px rgba(13, 148, 136, 0.65);
+      transform: translateY(-1px);
+
+      &::after {
+        left: 130%;
+      }
     }
   }
 
   &--outline {
     background: #fff;
     color: var(--color-primary);
-    border-color: var(--color-border);
+    border-color: var(--color-border-strong);
 
     &:hover:not(:disabled) {
-      border-color: var(--color-primary);
-      background: var(--color-muted);
+      border-color: rgba(13, 148, 136, 0.5);
+      background: rgba(20, 184, 166, 0.06);
     }
   }
 
@@ -229,9 +272,9 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
 }
 
 .auth-switch {
-  margin-top: 32px;
+  margin-top: 28px;
   text-align: center;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: var(--color-muted-foreground);
 
   button {
@@ -272,5 +315,9 @@ $focus-ring: 0 0 0 3px rgba($brand, 0.18);
       flex-basis: auto;
       padding: 40px 20px;
     }
+  }
+
+  .auth-card {
+    padding: 32px 24px;
   }
 }

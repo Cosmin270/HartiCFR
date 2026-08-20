@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
 
     public DbSet<Log> Logs { get; set; }
 
+    public DbSet<Station> Stations { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -24,6 +26,11 @@ public class AppDbContext : DbContext
             entity.Property(l => l.ConfigType).HasConversion<string>();
             entity.Property(l => l.Producer).HasConversion<string>();
             entity.Property(l => l.OperatingMode).HasConversion<string>();
+        });
+
+        modelBuilder.Entity<Station>(entity =>
+        {
+            entity.ComplexProperty(s => s.Position);
         });
     }
 }

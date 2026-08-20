@@ -1,0 +1,253 @@
+import { memo, useMemo, useState } from "react";
+
+export type ColumnFilter = "text" | "select";
+
+export interface ColumnDef<T> {
+    key: string;
+    label: string;
+    filter: ColumnFilter;
+    num?: boolean;
+    get: (row: T) => string | number | undefined;
+}
+
+// A single data row. Wrapped in memo so that toggling one checkbox only
+// re-renders that row instead of all ~2000+ rows in the table. This relies on
+// `columns` and `onToggle` being stable references from the parent.
+function TableRowInner<T extends { id: number }>({
+    row,
+    columns,
+    isSel,
+    isFocused,
+    onToggle,
+}: {
+    row: T;
+    columns: ColumnDef<T>[];
+    isSel: boolean;
+    isFocused: boolean;
+    onToggle: (id: number) => void;
+}) {
+    const rowClass = [isSel ? "is-selected" : "", isFocused ? "is-focused" : ""]
+        .filter(Boolean)
+        .join(" ");
+    return (
+        <tr className={rowClass || undefined} onClick={() => onToggle(row.id)}>
+            <td className="check">
+                <input
+                    type="checkbox"
+                    checked={isSel}
+                    onChange={() => onToggle(row.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`Select row ${row.id}`}
+                />
+            </td>
+            {columns.map((col) => (
+                <td key={col.key} className={col.num ? "num" : undefined}>
+                    {col.get(row)}
+                </td>
+            ))}
+        </tr>
+    );
+}
+const TableRow = memo(TableRowInner) as typeof TableRowInner;
+
+interface DataPanelProps<T extends { id: number }> {
+    title: string;
+    columns: ColumnDef<T>[];
+    rows: T[];
+    loading: boolean;
+    emptyText: string;
+    selected: Set<number>;
+    focusedId?: number | null;
+    onToggleRow: (id: number) => void;
+    onSelectMany: (ids: number[], select: boolean) => void;
+    onClearSelection: () => void;
+    onRender: () => void;
+    renderCount?: number;
+    hidden?: boolean;
+}
+
+export default function DataPanel<T extends { id: number }>({
+    title,
+    columns,
+    rows,
+    loading,
+    emptyText,
+    selected,
+    focusedId = null,
+    onToggleRow,
+    onSelectMany,
+    onClearSelection,
+    onRender,
+    renderCount,
+    hidden = false,
+}: DataPanelProps<T>) {
+    const plotCount = renderCount ?? selected.size;
+    const [filters, setFilters] = useState<Record<string, string>>({});
+
+    const selectOptions = useMemo(() => {
+        const map: Record<string, string[]> = {};
+        for (const col of columns) {
+            if (col.filter !== "select") continue;
+            const values = new Set<string>();
+            for (const row of rows) {
+                const v = col.get(row);
+                if (v !== undefined && v !== null && v !== "") values.add(String(v));
+            }
+            map[col.key] = Array.from(values).sort();
+        }
+        return map;
+    }, [columns, rows]);
+
+    const filtered = useMemo(() => {
+        return rows.filter((row) =>
+            columns.every((col) => {
+                const q = filters[col.key];
+                if (!q) return true;
+                const raw = col.get(row);
+                const val = raw === undefined || raw === null ? "" : String(raw);
+                return col.filter === "select"
+                    ? val === q
+                    : val.toLowerCase().includes(q.toLowerCase());
+            })
+        );
+    }, [rows, columns, filters]);
+
+    const anyFilterActive = Object.values(filters).some((v) => v !== "");
+    const filteredIds = useMemo(() => filtered.map((r) => r.id), [filtered]);
+    const allSelected =
+        filtered.length > 0 && filteredIds.every((id) => selected.has(id));
+
+    function setFilter(key: string, value: string) {
+        setFilters((prev) => ({ ...prev, [key]: value }));
+    }
+
+    return (
+        <section className={`panel panel--table${hidden ? " is-hidden" : ""}`}>
+            <div className="panel__head">
+                <h2 className="panel__title">
+                    {title}
+                    <span className="panel__meta">
+                        {loading
+                            ? "Loading…"
+                            : anyFilterActive
+                              ? `${filtered.length} of ${rows.length} rows`
+                              : `${rows.length} rows`}
+                    </span>
+                </h2>
+                <div className="panel__actions">
+                    {anyFilterActive && (
+                        <button type="button" className="btn-clear" onClick={() => setFilters({})}>
+                            Clear filters
+                        </button>
+                    )}
+                    {selected.size > 0 && (
+                        <button type="button" className="btn-clear" onClick={onClearSelection}>
+                            Clear selection
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        className="btn-render"
+                        onClick={onRender}
+                        disabled={plotCount === 0}
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z" />
+                            <circle cx="12" cy="10" r="2.5" />
+                        </svg>
+                        Render {plotCount > 0 ? `(${plotCount})` : ""}
+                    </button>
+                </div>
+            </div>
+
+            <div className="log-table-wrap">
+                <table className="log-table">
+                    <thead>
+                        <tr className="head-labels">
+                            <th className="check" aria-hidden="true" />
+                            {columns.map((col) => (
+                                <th key={col.key} className={col.num ? "num" : undefined}>
+                                    {col.label}
+                                </th>
+                            ))}
+                        </tr>
+                        <tr className="head-filters">
+                            <th className="check">
+                                <input
+                                    type="checkbox"
+                                    checked={allSelected}
+                                    onChange={() => onSelectMany(filteredIds, !allSelected)}
+                                    aria-label="Select all filtered rows"
+                                    disabled={loading || filtered.length === 0}
+                                />
+                            </th>
+                            {columns.map((col) => (
+                                <th key={col.key}>
+                                    {col.filter === "select" ? (
+                                        <select
+                                            value={filters[col.key] ?? ""}
+                                            onChange={(e) => setFilter(col.key, e.target.value)}
+                                            aria-label={`Filter ${col.label}`}
+                                            disabled={loading}
+                                        >
+                                            <option value="">All</option>
+                                            {selectOptions[col.key]?.map((opt) => (
+                                                <option key={opt} value={opt}>
+                                                    {opt}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            value={filters[col.key] ?? ""}
+                                            onChange={(e) => setFilter(col.key, e.target.value)}
+                                            placeholder="Filter…"
+                                            aria-label={`Filter ${col.label}`}
+                                            disabled={loading}
+                                        />
+                                    )}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading &&
+                            Array.from({ length: 12 }).map((_, i) => (
+                                <tr key={`sk-${i}`} className="skeleton-row">
+                                    <td className="check" />
+                                    {columns.map((col) => (
+                                        <td key={col.key}>
+                                            <span className="skeleton" />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+
+                        {!loading &&
+                            filtered.map((row) => (
+                                <TableRow
+                                    key={row.id}
+                                    row={row}
+                                    columns={columns}
+                                    isSel={selected.has(row.id)}
+                                    isFocused={row.id === focusedId}
+                                    onToggle={onToggleRow}
+                                />
+                            ))}
+
+                        {!loading && filtered.length === 0 && (
+                            <tr>
+                                <td colSpan={columns.length + 1} className="log-table__empty">
+                                    {rows.length === 0
+                                        ? emptyText
+                                        : "No rows match the current filters."}
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    );
+}
