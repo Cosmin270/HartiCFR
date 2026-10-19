@@ -1,0 +1,751 @@
+% HartiCFR -- documentația proiectului
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+\else\ifLuaTeX
+  \usepackage{fontspec}
+\else
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+\fi\fi
+\usepackage[romanian]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{fvextra}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+
+\definecolor{cfrteal}{HTML}{0D9488}
+\definecolor{cfrviolet}{HTML}{7C3AED}
+\definecolor{cframber}{HTML}{F59E0B}
+\definecolor{codebg}{HTML}{F5F5F4}
+\definecolor{codeframe}{HTML}{D6D3D1}
+\definecolor{notebg}{HTML}{ECFDF5}
+\definecolor{warnbg}{HTML}{FFFBEB}
+
+\hypersetup{colorlinks=true,linkcolor=cfrteal,urlcolor=cfrteal}
+
+
+\newenvironment{codeblock}
+  {\VerbatimEnvironment
+   \begin{tcolorbox}[colback=codebg,colframe=codeframe,boxrule=0.4pt,arc=0pt,
+                     left=6pt,right=6pt,top=3pt,bottom=3pt]
+   \begin{Verbatim}[fontsize=\small,breaklines=true,breakanywhere=true]}
+  {\end{Verbatim}\end{tcolorbox}}
+
+\newtcolorbox{note}[1][Notă]{colback=notebg,colframe=cfrteal,
+  fonttitle=\bfseries,title=#1,boxrule=0.6pt,arc=2pt}
+\newtcolorbox{warning}[1][Atenție]{colback=warnbg,colframe=cframber,
+  fonttitle=\bfseries,title=#1,boxrule=0.6pt,arc=2pt}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\ui}[1]{\textsf{\textbf{#1}}}  
+
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{3em}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small HartiCFR -- Documentația proiectului}
+\fancyhead[R]{\small\nouppercase{\leftmark}}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{3cm}
+  \IfFileExists{../HartiCFR_FE/public/logo.png}{%
+    \includegraphics[width=3cm]{../HartiCFR_FE/public/logo.png}\par\vspace{1cm}}{}
+  {\Huge\bfseries Harti CFR\par}
+  \vspace{0.4cm}
+  {\Large Stațiile și trecerile la nivel CFR pe o singură hartă\par}
+  \vspace{1.5cm}
+  {\large Documentația proiectului și ghid de utilizare\par}
+  \vfill
+  {\large Cosmin Mocanu\par}
+  \vspace{0.2cm}
+  {\today\par}
+\end{titlepage}
+
+\setcounter{tocdepth}{2}
+\begingroup\small\tableofcontents\endgroup
+\newpage
+
+\section{Ce este Harti CFR?}
+
+Harti CFR este o aplicație web pentru consultarea a două seturi de date ale
+rețelei feroviare din România (CFR) și afișarea lor pe o hartă interactivă:
+
+\begin{itemize}
+  \item \textbf{Treceri la nivel}: aproximativ 1\,200 de treceri la nivel și
+        instalații din stații, dotate cu echipamente de semnalizare. Pentru
+        fiecare, aplicația reține sucursala regională (SRCF), secția CT,
+        poziția kilometrică, stațiile între care se află, magistrala, tipul
+        instalației de semnalizare, producătorul, regimul de funcționare și
+        coordonatele GPS.
+  \item \textbf{Stații}: aproximativ 2\,300 de stații de cale ferată, fiecare
+        cu codul, numele și coordonatele GPS.
+\end{itemize}
+
+Utilizatorul își creează un cont, se autentifică, filtrează tabelele până
+rămân înregistrările care îl interesează, le selectează și apasă
+\ui{Render} pentru a le vedea ca puncte pe harta României. Ținând mouse-ul
+deasupra unui punct, se afișează toate detaliile înregistrării respective.
+
+\subsection{Proiectul pe scurt}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Componentă} & \textbf{Tehnologie} \\
+\midrule
+Frontend       & React 19, TypeScript, Vite, React Router, Leaflet (hartă), SCSS / Tailwind \\
+Backend        & ASP.NET Core (.NET 10) Web API, Entity Framework Core \\
+Bază de date   & PostgreSQL 16 (rulează local în Docker) \\
+Fundal hartă   & Harta de bază CARTO „Voyager” (necesită o cheie API gratuită) \\
+Autentificare  & Sesiuni pe bază de cookie, parole criptate cu BCrypt \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Cum se leagă componentele}
+
+\begin{center}
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners=3pt, minimum width=3.6cm,
+              minimum height=1.3cm, align=center, font=\small, thick},
+  arr/.style={-{Stealth[length=3mm]}, thick},
+  lbl/.style={font=\scriptsize, align=center, fill=white, inner sep=2pt}]
+  \node[box, draw=cfrteal]   (browser) {\textbf{Browser}\\Aplicația React\\\scriptsize localhost:5173};
+  \node[box, draw=cfrviolet, right=2.6cm of browser] (api) {\textbf{API backend}\\ASP.NET Core\\\scriptsize localhost:5016};
+  \node[box, draw=gray, right=2.0cm of api] (db) {\textbf{PostgreSQL}\\Container Docker\\\scriptsize localhost:5433};
+  \node[box, draw=cframber, below=1.4cm of browser] (carto) {\textbf{CARTO}\\fundalul hărții};
+
+  \draw[arr] (browser) -- node[lbl, above=2pt] {JSON prin HTTP\\+ cookie de sesiune} (api);
+  \draw[arr] (api) -- node[lbl, above=2pt] {EF Core} (db);
+  \draw[arr] (browser) -- node[lbl, right=2pt] {imagini hartă\\(cu cheie API)} (carto);
+\end{tikzpicture}
+\end{center}
+
+\begin{enumerate}
+  \item \textbf{Frontend-ul} este o aplicație React de tip single-page. Nu
+        comunică niciodată direct cu baza de date; apelează backend-ul la
+        adresele \code{/api/...}.
+  \item \textbf{Backend-ul} verifică cine este autentificat (prin cookie-ul
+        \code{harticfr\_auth}), citește datele din PostgreSQL și le returnează
+        în format JSON.
+  \item \textbf{Baza de date} conține trei tabele: \code{Users}
+        (utilizatori), \code{Logs} (trecerile la nivel) și \code{Stations}
+        (stațiile). Backend-ul creează și actualizează automat aceste tabele la
+        fiecare pornire.
+  \item \textbf{Fundalul hărții} este descărcat de browser direct de la
+        CARTO. Doar punctele de pe hartă provin din datele noastre.
+\end{enumerate}
+
+\section{Structura proiectului}
+
+\begin{codeblock}
+HartiCFR/
+|-- HartiCFR_BE/                 Backend (ASP.NET Core Web API)
+|   |-- Program.cs               Pornirea aplicației (DB, autentificare, CORS)
+|   |-- Controllers/             Endpoint-urile HTTP (Auth, Log, Station)
+|   |-- Repositories/            Accesul la baza de date, o clasă pe tabel
+|   |-- Models/                  Clasele de date (User, Log, Station, enumerări)
+|   |-- Data/AppDbContext.cs     Maparea tabelelor în Entity Framework
+|   |-- Migrations/              Istoricul schemei bazei de date (generat automat)
+|   |-- Configuration/           Transformă un URL postgres:// în connection string
+|   |-- appsettings*.json        Configurare (connection string, CORS)
+|   `-- Dockerfile               Imaginea de container folosită în producție
+`-- HartiCFR_FE/                 Frontend (React + Vite)
+    |-- src/
+    |   |-- App.tsx              Rutele paginilor
+    |   |-- pages/               Pagina de start, Login, Creare cont, Dashboard
+    |   |-- components/          DataPanel (tabele), GeoMap (hartă), ...
+    |   |-- lib/api.ts           Adresa backend-ului pentru cereri
+    |   `-- types/               Structurile TypeScript pentru Log și Station
+    |-- public/                  Logo și iconițe
+    |-- .env.example             Descrie variabilele de mediu
+    `-- package.json             Dependențe și scripturi
+\end{codeblock}
+
+
+\section{Rularea proiectului pe calculatorul tău}
+
+\subsection{Ce trebuie instalat}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Unealtă} & \textbf{Versiune} & \textbf{Folosită pentru} \\
+\midrule
+.NET SDK        & 10.x             & Compilarea și rularea backend-ului \\
+Node.js         & 20 sau mai nou   & Rularea frontend-ului \\
+pnpm            & 11.x             & Instalarea pachetelor frontend (\code{npm i -g pnpm}) \\
+Docker Desktop  & o versiune recentă & Rularea PostgreSQL \\
+Git             & orice            & Descărcarea codului \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Verifică dacă totul este disponibil:
+
+\begin{codeblock}
+dotnet --version
+node --version
+pnpm --version
+docker --version
+\end{codeblock}
+
+\subsection{Pasul 1 -- Descarcă codul}
+
+\begin{codeblock}
+git clone https://github.com/Cosmin270/HartiCFR.git
+cd HartiCFR
+\end{codeblock}
+
+\subsection{Pasul 2 -- Pornește baza de date}
+
+Backend-ul se așteaptă ca PostgreSQL să ruleze pe portul \textbf{5433} (nu pe
+portul implicit 5432, ca să nu intre în conflict cu un Postgres pe care
+l-ai avea deja instalat), cu utilizatorul \code{postgres} și parola
+\code{cfr}. Asigură-te că Docker Desktop este pornit.
+
+\textbf{Doar prima dată} -- creează containerul:
+
+\begin{codeblock}
+docker run --name harticfr-db \
+  -e POSTGRES_PASSWORD=cfr \
+  -p 5433:5432 \
+  -d postgres:16
+\end{codeblock}
+
+\textbf{De fiecare dată după aceea} -- doar repornește-l:
+
+\begin{codeblock}
+docker start harticfr-db
+\end{codeblock}
+
+Nu trebuie să creezi tu baza de date \code{harticfr} sau vreun tabel:
+backend-ul face asta la pornire (vezi secțiunea~\ref{sec:migrations}).
+
+\subsection{Pasul 3 -- Pornește backend-ul}
+
+\begin{codeblock}
+cd HartiCFR_BE
+dotnet run --launch-profile http
+\end{codeblock}
+
+Așteaptă până apare mesajul \code{Now listening on: http://localhost:5016}.
+Verifică dacă funcționează deschizând \url{http://localhost:5016/health} --
+răspunsul trebuie să fie \code{\{"status":"ok"\}}.
+
+\subsection{Pasul 4 -- Configurează cheia pentru hartă}
+
+Fundalul hărții vine de la CARTO, care cere o cheie API gratuită. Fără ea,
+fiecare porțiune de hartă afișează un filigran mare „API KEY REQUIRED”.
+
+\begin{enumerate}
+  \item Cere o cheie la \url{https://carto.com/basemaps/apikey}.
+  \item Creează fișierul \file{HartiCFR\_FE/.env.local} cu conținutul:
+\begin{codeblock}
+VITE_CARTO_API_KEY=cheia-ta-aici
+\end{codeblock}
+\end{enumerate}
+
+Fișierul \file{.env.local} este ignorat de Git, deci cheia nu ajunge
+niciodată într-un commit.
+
+\subsection{Pasul 5 -- Pornește frontend-ul}
+
+Deschide un al doilea terminal (backend-ul continuă să ruleze în primul):
+
+\begin{codeblock}
+cd HartiCFR_FE
+pnpm install      # prima dată sau după modificări în package.json
+pnpm dev
+\end{codeblock}
+
+Deschide \url{http://localhost:5173} în browser.
+
+\begin{note}[Sfat]
+Folosește \code{localhost}, nu \code{127.0.0.1}. Serverul de dezvoltare
+ascultă doar pe \code{localhost}, iar cookie-ul de autentificare este legat
+de acest nume.
+\end{note}
+
+\subsection{Pasul 6 -- Încarcă datele}
+\label{sec:data}
+
+O bază de date nou creată are tabelele, dar \textbf{nu are nicio stație și
+nicio trecere la nivel}, așa că tabelele din dashboard vor fi goale.
+Proiectul nu conține un script de import pentru fișierele sursă
+(\file{Statii Romania\_practica.csv} și
+\file{Treceri cu instalatii de semnalizare\_PRACTICA.csv}); datele au fost
+încărcate manual în baza de date locală a dezvoltatorului.
+
+Cel mai simplu mod de a obține datele este să ceri o copie (dump) a unei baze
+de date existente și să o restaurezi în containerul tău:
+
+\begin{codeblock}
+# pe un calculator care are deja datele
+docker exec harticfr-db pg_dump -U postgres -d harticfr \
+  --data-only -t '"Stations"' -t '"Logs"' > harticfr-data.sql
+
+# pe calculatorul tău
+docker exec -i harticfr-db psql -U postgres -d harticfr < harticfr-data.sql
+\end{codeblock}
+
+Corespondența dintre coloanele din fișierele CSV și baza de date este
+descrisă în secțiunea~\ref{sec:datamodel}.
+
+\subsection{Rezumat rapid}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Ce} & \textbf{Adresă} \\
+\midrule
+Site (frontend)   & \url{http://localhost:5173} \\
+API backend       & \url{http://localhost:5016} \\
+Verificare stare  & \url{http://localhost:5016/health} \\
+PostgreSQL        & \code{localhost:5433}, baza \code{harticfr}, utilizator \code{postgres}, parolă \code{cfr} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ================================================================
+\section{Utilizarea aplicației}
+
+Interfața aplicației este în limba engleză, așa că numele butoanelor sunt
+scrise mai jos exact cum apar pe ecran.
+
+\subsection{Crearea unui cont și autentificarea}
+
+\begin{enumerate}
+  \item Deschide site-ul. Pagina de start oferă butoanele \ui{Log in}
+        (autentificare) și \ui{Create an account} (creare cont).
+  \item Alege \ui{Create an account}, completează numele, adresa de e-mail și
+        parola, apoi apasă \ui{Create account}. Fiecare adresă de e-mail poate
+        fi înregistrată o singură dată.
+  \item Autentifică-te cu aceeași adresă de e-mail și parolă. Vei ajunge pe
+        \textbf{dashboard}.
+\end{enumerate}
+
+\begin{warning}
+Crearea contului \emph{nu} te autentifică automat. După ce apeși
+\ui{Create account}, aplicația încearcă pentru scurt timp să deschidă
+dashboard-ul și apoi te trimite la pagina de autentificare -- acest
+comportament este normal. Autentifică-te cu contul pe care tocmai l-ai creat.
+\end{warning}
+
+Rămâi autentificat timp de 7 zile; fiecare vizită prelungește sesiunea.
+Butonul \ui{Log out} din colțul din dreapta sus încheie sesiunea. Dacă
+deschizi \code{/dashboard} fără să fii autentificat, ești trimis la pagina de
+autentificare.
+
+\subsection{Dashboard-ul}
+
+Dashboard-ul are trei zone:
+
+\begin{itemize}
+  \item \textbf{Bara de sus}, cu două tab-uri -- \ui{Treceri la nivel} și
+        \ui{Statii} -- și butonul \ui{Log out}.
+  \item \textbf{Tabelul} pentru tab-ul selectat, cu un filtru sub antetul
+        fiecărei coloane.
+  \item \textbf{Harta}, în dreapta pe ecranele mari și sub tabel pe telefoane
+        și tablete.
+\end{itemize}
+
+Deasupra tabelului, trei contoare arată câte înregistrări are tab-ul curent
+(\textbf{Records}), câte rânduri sunt selectate în total, din ambele tab-uri
+(\textbf{Selected}), și câte sunt afișate în acest moment pe hartă
+(\textbf{Plotted}).
+
+\subsection{Filtrarea tabelelor}
+
+Fiecare coloană are un filtru în al doilea rând al antetului:
+
+\begin{itemize}
+  \item \textbf{Filtrele text} (\emph{Filter\dots}) păstrează rândurile a
+        căror valoare \emph{conține} textul introdus, fără să conteze literele
+        mari sau mici. Dacă scrii \code{CT1} în \emph{Sectia CT}, rămân toate
+        secțiile care conțin „CT1”.
+  \item \textbf{Filtrele cu listă} (\emph{Tip, Instalatie, Config, Producator,
+        Regim}) păstrează doar rândurile cu exact valoarea aleasă. Opțiunea
+        \ui{All} dezactivează filtrul.
+\end{itemize}
+
+Filtrele se combină: un rând este afișat doar dacă îndeplinește \emph{toate}
+filtrele active. Cât timp există filtre active, titlul tabelului arată
+„\emph{N of M rows}” (N din M rânduri), iar butonul \ui{Clear filters}
+le resetează pe toate.
+
+\subsection{Selectarea rândurilor și afișarea lor pe hartă}
+
+\begin{enumerate}
+  \item Apasă pe un rând (sau pe căsuța lui) pentru a-l selecta. Apasă din nou
+        pentru a-l deselecta.
+  \item Căsuța din rândul de antet selectează sau deselectează \emph{toate
+        rândurile care corespund filtrelor curente} -- o metodă rapidă de a
+        afișa, de exemplu, toate trecerile realizate de un anumit producător.
+  \item Selecțiile se păstrează când schimbi tab-ul, deci poți selecta câteva
+        treceri, trece la \ui{Statii}, selecta câteva stații și le poți afișa
+        împreună.
+  \item Apasă \ui{Render (N)}. Toate trecerile și stațiile selectate apar pe
+        hartă. Pe telefon, pagina coboară automat până la hartă.
+\end{enumerate}
+
+\ui{Clear selection} debifează toate rândurile din tab-ul curent. Nu șterge
+punctele deja afișate pe hartă -- harta se schimbă doar când apeși din nou
+\ui{Render}.
+
+\subsection{Citirea hărții}
+
+\begin{itemize}
+  \item Punctele \textcolor{cfrteal}{\textbf{verzi-albăstrui}} sunt treceri la
+        nivel, iar cele \textcolor{cfrviolet}{\textbf{violet}} sunt stații.
+  \item Punctele apropiate sunt grupate într-un cerc cu un număr. Apropie
+        harta (zoom) sau apasă pe cerc ca să-l desfaci; de la nivelul de zoom
+        13, fiecare punct apare separat.
+  \item \textbf{Ține mouse-ul deasupra unui punct} ca să vezi toate detaliile:
+        pentru o trecere -- SRCF, secția CT, kilometrul, tipul, magistrala,
+        instalația, configurația, producătorul, regimul de funcționare și
+        coordonatele; pentru o stație -- codul și coordonatele.
+  \item După \ui{Render}, harta se încadrează automat astfel încât să cuprindă
+        toate punctele afișate.
+  \item Dacă selectezi un rând care este deja pe hartă, harta „zboară” până la
+        el și îl evidențiază cu \textcolor{cframber}{\textbf{portocaliu}}.
+        Rândul corespunzător din tabel este și el evidențiat.
+  \item Etichetele \ui{Treceri} și \ui{Statii} de deasupra hărții arată câte
+        puncte de fiecare tip sunt afișate. Apasă pe o etichetă ca să ascunzi
+        sau să reafișezi stratul respectiv; apasă pe \ui{$\times$} ca să-l
+        elimini de pe hartă.
+\end{itemize}
+
+Înregistrările fără coordonate valide (lipsă sau 0,0) nu apar pe hartă, fără
+niciun mesaj; ele rămân însă vizibile în tabele.
+
+\section{Datele}
+\label{sec:datamodel}
+
+\subsection{Treceri la nivel (tabelul \code{Logs})}
+
+\begin{longtable}{@{}p{2.3cm}p{3.1cm}p{9.0cm}@{}}
+\toprule
+\textbf{Coloană pe ecran} & \textbf{Câmp} & \textbf{Semnificație} \\
+\midrule
+\endhead
+ID           & \code{Id}            & Număr intern, atribuit de baza de date. \\
+SRCF         & \code{SRCF}          & Sucursala regională de căi ferate (de ex.\ București). \\
+Sectia CT    & \code{CT}            & Secția CT responsabilă de trecere. \\
+Km TN        & \code{TNPosition}    & Poziția kilometrică pe linie. \\
+Tip          & \code{LocationType}  & \code{LC} (trecere în linie curentă) sau \code{Statie} (în interiorul unei stații). \\
+De la        & \code{Location.start}& Prima stație lângă / între care se află trecerea. \\
+Pana la      & \code{Location.end}  & A doua stație (gol pentru trecerile din stații). \\
+Magistrala   & \code{MainLine}      & Numărul magistralei. \\
+Instalatie   & \code{ElectricType}  & Instalația de semnalizare: \code{BAT} sau \code{SAT}. \\
+Config       & \code{ConfigType}    & \code{Electronic}, \code{Relee} sau \code{Necunoscut}. \\
+Producator   & \code{Producer}      & \code{Aerofina}, \code{Electromagnetica}, \code{SPIACT\_Cr} sau \code{\_} când nu se cunoaște. \\
+Regim        & \code{OperatingMode} & \code{Automat} sau \code{Manual}. \\
+Longitudine  & \code{Position.x}    & Longitudinea GPS (est). \\
+Latitudine   & \code{Position.y}    & Latitudinea GPS (nord). \\
+\bottomrule
+\end{longtable}
+
+Aceste câmpuri provin din fișierul \emph{Treceri cu instalatii de
+semnalizare\_PRACTICA.csv}: \emph{SRCF, Sectia CT, Pozitia km TN, LC/Statie,
+Amplasare Statia 1 / Statia 2, Numar magistrala, Tip instalatie, Tip
+electro/relee, Producator, Regim de functionare, X longitudine, Y
+latitudine}. Coloanele \emph{In dependenta cu semnale} și \emph{Anul
+modernizarii} din fișier nu sunt salvate.
+
+\subsection{Stații (tabelul \code{Stations})}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+\textbf{Coloană pe ecran} & \textbf{Câmp} & \textbf{Semnificație} \\
+\midrule
+ID          & \code{Id}         & Număr intern. \\
+Cod         & \code{Cod}        & Codul oficial al stației. \\
+Nume statie & \code{Name}       & Numele stației. \\
+Longitudine & \code{Position.x} & Longitudinea GPS. \\
+Latitudine  & \code{Position.y} & Latitudinea GPS. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Acestea provin din fișierul \emph{Statii Romania\_practica.csv}
+(\code{cod, nume, xcoord, ycoord}).
+
+\subsection{Utilizatori (tabelul \code{Users})}
+
+Fiecare cont reține un nume de utilizator, o adresă de e-mail unică, un hash
+BCrypt al parolei (parola propriu-zisă nu este salvată niciodată) și data
+creării.
+
+\section{Referința API a backend-ului}
+
+Toate endpoint-urile se află la adresa backend-ului
+(\url{http://localhost:5016} local). Corpurile cererilor și răspunsurilor
+sunt în format JSON. Endpoint-urile marcate în coloana \textbf{Auth}
+returnează \code{401 Unauthorized} dacă cererea nu conține cookie-ul de
+sesiune obținut prin \code{/api/auth/login}.
+
+\begin{longtable}{@{}p{1.55cm}p{5.6cm}p{1.15cm}p{6.1cm}@{}}
+\toprule
+\textbf{Metodă} & \textbf{Cale} & \textbf{Auth} & \textbf{Ce face} \\
+\midrule
+\endhead
+GET  & \code{/health}                    & nu & Returnează \code{\{"status":"ok"\}}; folosit pentru a verifica dacă serverul funcționează. \\
+POST & \code{/api/auth/register}         & nu & Creează un cont. Corp: \code{username}, \code{email}, \code{password}. \code{400} dacă e-mailul există deja. \\
+POST & \code{/api/auth/login}            & nu & Corp: \code{email}, \code{password}. Setează cookie-ul de sesiune și returnează \code{id}, \code{username}, \code{email}. \code{401} la date greșite. \\
+GET  & \code{/api/auth/me}               & da & Returnează \code{userId} și \code{username} pentru utilizatorul autentificat. \\
+POST & \code{/api/auth/logout}           & nu & Șterge cookie-ul de sesiune. \\
+GET  & \code{/api/Log/logs}              & da & Listează toate trecerile la nivel. \\
+GET  & \code{/api/Log/logs/\{id\}}       & da & O singură trecere sau \code{404}. \\
+POST & \code{/api/Log/logs}              & da & Adaugă o trecere (corp: un obiect trecere). Nu este folosit de site. \\
+GET  & \code{/api/Station/stations}      & da & Listează toate stațiile. \\
+GET  & \code{/api/Station/stations/\{id\}} & da & O singură stație sau \code{404}. \\
+\bottomrule
+\end{longtable}
+
+Testarea API-ului din terminal (fișierul \code{jar.txt} păstrează cookie-ul,
+deci rămâi autentificat între comenzi):
+
+\begin{codeblock}
+curl -c jar.txt -H 'Content-Type: application/json' \
+  -d '{"email":"tu@exemplu.ro","password":"secret"}' \
+  http://localhost:5016/api/auth/login
+
+curl -b jar.txt http://localhost:5016/api/Station/stations/1
+\end{codeblock}
+
+O trecere la nivel este returnată astfel (valorile enumerărilor sunt trimise
+ca text):
+
+\begin{codeblock}
+{
+  "id": 1, "srcf": "Bucuresti", "ct": "CT1 Bucuresti",
+  "tnPosition": 5240, "locationType": "Statie",
+  "location": { "start": "H. Pajura", "end": "" },
+  "mainLine": "", "electricType": "SAT", "configType": "Relee",
+  "producer": "_", "operatingMode": "Automat",
+  "position": { "x": 26.0361, "y": 44.4728 }
+}
+\end{codeblock}
+
+\section{Cum funcționează codul}
+
+\subsection{Backend}
+
+Backend-ul are o structură simplă \emph{controller $\rightarrow$ repository
+$\rightarrow$ bază de date}.
+
+\begin{description}[style=nextline,leftmargin=1.2cm]
+  \item[\file{Program.cs}] Leagă totul: citește conexiunea la baza de date,
+    înregistrează repository-urile, configurează autentificarea prin cookie
+    și CORS, aplică migrările și mapează controller-ele și \code{/health}.
+  \item[\file{Controllers/}] O clasă pentru fiecare resursă.
+    \code{AuthController} se ocupă de conturi și sesiuni; \code{LogController}
+    și \code{StationController} returnează datele și sunt marcate cu
+    \code{[Authorize]}, deci cer un utilizator autentificat.
+  \item[\file{Repositories/}] Fiecare repository (cu interfața
+    corespunzătoare) conține interogările Entity Framework pentru un tabel.
+    Controller-ele folosesc doar interfețele, astfel încât codul pentru baza
+    de date stă într-un singur loc.
+  \item[\file{Models/}] Clase C\# simple pentru tabele. \file{Helper.cs}
+    conține enumerările (\code{LocationType}, \code{ElectricType},
+    \code{ConfigType}, \code{Producer}, \code{OperatingMode}) și tipurile
+    valoare \code{Location} și \code{Position}.
+  \item[\file{Data/AppDbContext.cs}] Îi spune lui Entity Framework cum să
+    salveze modelele: \code{Location} și \code{Position} devin coloane
+    separate (\code{Position\_x}, \code{Position\_y}, \dots), iar enumerările
+    sunt salvate ca text.
+\end{description}
+
+\paragraph{Autentificarea.} La autentificare, serverul verifică parola față de
+hash-ul BCrypt și emite un cookie criptat, de tip HTTP-only, numit
+\code{harticfr\_auth}, valabil 7 zile și prelungit automat la fiecare
+utilizare. Apelurile API neautentificate primesc \code{401} (nu o
+redirecționare), iar frontend-ul folosește acest răspuns pentru a trimite
+utilizatorul la pagina de autentificare.
+
+\paragraph{CORS.} În dezvoltare, orice origine \code{localhost} poate apela
+API-ul cu credențiale. În producție, originile permise sunt citite din
+setarea \code{Cors\_\_AllowedOrigins}.
+
+\subsubsection{Migrările bazei de date}
+\label{sec:migrations}
+
+Schema este definită de modelele C\# și înregistrată în \file{Migrations/}.
+La fiecare pornire, backend-ul rulează \code{Database.Migrate()}, care
+creează baza de date dacă este nevoie și aplică migrările care nu au fost
+încă aplicate. După ce modifici un model, creează o migrare nouă:
+
+\begin{codeblock}
+dotnet tool install --global dotnet-ef     # o singura data
+cd HartiCFR_BE
+dotnet ef migrations add DescriereaModificarii
+\end{codeblock}
+
+Migrarea va fi aplicată automat la următoarea pornire a backend-ului.
+
+\subsection{Frontend}
+
+\begin{description}[style=nextline,leftmargin=1.2cm]
+  \item[\file{src/App.tsx}] Definește paginile: \code{/} (pagina de start),
+    \code{/login}, \code{/signin} (creare cont) și \code{/dashboard}.
+    Dashboard-ul este protejat de \code{ProtectedRoute}.
+  \item[\file{components/ProtectedRoute.tsx}] Apelează \code{/api/auth/me}
+    înainte de a afișa o pagină protejată și redirecționează la
+    \code{/login} dacă nu există o sesiune.
+  \item[\file{pages/DashboardPage.tsx}] Încarcă o singură dată trecerile și
+    stațiile, reține selecțiile, înregistrările afișate și punctul evidențiat
+    pe hartă și definește coloanele fiecărui tabel (\code{LOG\_COLUMNS},
+    \code{STATION\_COLUMNS}).
+  \item[\file{components/DataPanel.tsx}] Un tabel reutilizabil cu filtre pe
+    fiecare coloană, selecție de rânduri și butonul \ui{Render}. Rândurile
+    sunt memoizate, astfel încât bifarea unei căsuțe nu redesenează mii de
+    rânduri.
+  \item[\file{components/GeoMap.tsx}] Harta Leaflet: stratul de fundal,
+    punctele grupate pentru fiecare strat, ferestrele cu detalii, încadrarea
+    automată și deplasarea către punctul selectat.
+  \item[\file{lib/api.ts}] Construiește adresa completă pentru fiecare cerere
+    API (vezi \code{VITE\_API\_URL} mai jos). Toate cererile trimit
+    \code{credentials: "include"}, astfel încât cookie-ul de sesiune să
+    însoțească cererea.
+\end{description}
+
+Comenzi utile pentru frontend (rulate în \file{HartiCFR\_FE}):
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\code{pnpm dev}     & Server de dezvoltare cu reîncărcare automată, pe portul 5173. \\
+\code{pnpm build}   & Verifică tipurile și construiește site-ul de producție în \file{dist/}. \\
+\code{pnpm preview} & Servește local folderul \file{dist/} construit. \\
+\code{pnpm lint}    & Rulează linter-ul Oxlint. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Referința de configurare}
+
+\subsection{Frontend (\file{HartiCFR\_FE/.env.local})}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Variabilă} & \textbf{Semnificație} \\
+\midrule
+\code{VITE\_CARTO\_API\_KEY} & Cheia CARTO pentru fundalul hărții. Necesară
+  pentru o hartă fără filigran. Ajunge în codul JavaScript construit, deci
+  este publică prin natura ei. \\
+\code{VITE\_API\_URL} & Adresa de bază a backend-ului. Lasă-o nesetată
+  local (implicit \url{http://localhost:5016}). Se setează doar dacă
+  frontend-ul trebuie să folosească un backend de la altă adresă. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Vite citește aceste variabile la pornirea serverului de dezvoltare sau la
+construirea site-ului, deci repornește \code{pnpm dev} (sau reconstruiește
+site-ul) după ce le modifici.
+
+\subsection{Backend}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Setare} & \textbf{Semnificație} \\
+\midrule
+\code{ConnectionStrings:DefaultConnection} & Conexiunea la baza de date
+  folosită local; setată în \file{appsettings.Development.json}. \\
+\code{DATABASE\_URL} (variabilă de mediu) & Dacă este setată, o înlocuiește
+  pe cea de mai sus. Acceptă un URL de forma
+  \code{postgres://user:parola@host:port/db}. \\
+\code{Cors:AllowedOrigins} & Listă separată prin virgule cu originile
+  suplimentare care pot apela API-ul (ca variabilă de mediu:
+  \code{Cors\_\_AllowedOrigins}). \\
+\code{ASPNETCORE\_ENVIRONMENT} & \code{Development} local (reguli mai
+  relaxate pentru cookie și CORS, documentul OpenAPI la
+  \code{/openapi/v1.json}); \code{Production} în Docker. \\
+\code{PORT} (variabilă de mediu) & Portul pe care ascultă containerul Docker
+  (implicit 8080). \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Rezolvarea problemelor}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{5cm}>{\raggedright\arraybackslash}p{10.4cm}@{}}
+\toprule
+\textbf{Problemă} & \textbf{Ce faci} \\
+\midrule
+\endhead
+Backend-ul se oprește la pornire cu o eroare de conexiune &
+  Baza de date nu rulează. Pornește Docker Desktop, apoi
+  \code{docker start harticfr-db}. \\[4pt]
+\code{Cannot connect to the Docker daemon} &
+  Docker Desktop nu este deschis. Pornește-l și așteaptă până indică faptul
+  că rulează. \\[4pt]
+„Could not load data. Is the server running?” pe dashboard &
+  Backend-ul nu rulează sau nu este pe portul 5016. Pornește-l (pasul 3). \\[4pt]
+Harta afișează „API KEY REQUIRED” &
+  \code{VITE\_CARTO\_API\_KEY} lipsește sau este greșită în
+  \file{HartiCFR\_FE/.env.local}. Corecteaz-o și repornește \code{pnpm dev}. \\[4pt]
+Zona hărții este complet gri &
+  Nu există conexiune la internet sau imaginile hărții sunt blocate;
+  verifică uneltele de dezvoltator ale browserului (tab-ul Network). \\[4pt]
+Tabelele sunt goale („No crossings found”) &
+  Baza de date nu are încă date; vezi secțiunea~\ref{sec:data}. \\[4pt]
+După crearea contului ajung pe pagina de autentificare &
+  Este normal: înregistrarea nu te autentifică. Autentifică-te cu contul
+  nou. \\[4pt]
+Autentificarea reușește, dar sunt trimis înapoi la pagina de login &
+  Cookie-ul nu a fost salvat. Local, deschide site-ul pe \code{localhost},
+  nu pe \code{127.0.0.1}. \\[4pt]
+Portul este deja folosit (5016, 5173 sau 5433) &
+  O altă instanță rulează încă. Oprește-o sau găsește-o cu
+  \code{lsof -i :5016}. \\[4pt]
+O înregistrare selectată nu apare pe hartă &
+  Nu are coordonate (sau are 0,0) în baza de date, deci nu poate fi
+  poziționată. \\
+\bottomrule
+\end{longtable}
+
+\section{Limitări cunoscute și idei}
+
+\begin{itemize}
+  \item Înregistrarea nu autentifică automat utilizatorul.
+  \item Nu există resetare a parolei și nici reguli pentru complexitatea
+        parolei sau formatul adresei de e-mail.
+  \item Datele nu pot fi modificate din site. Backend-ul are un endpoint
+        pentru adăugarea unei treceri (\code{POST /api/Log/logs}), dar nicio
+        pagină nu îl folosește și nu există nimic pentru editare sau
+        ștergere.
+  \item Proiectul nu are un script care să importe fișierele CSV în baza de
+        date; o unealtă de import ar ușura mult configurarea pe un calculator
+        nou.
+  \item Nu există teste automate.
+\end{itemize}
+
+\end{document}
