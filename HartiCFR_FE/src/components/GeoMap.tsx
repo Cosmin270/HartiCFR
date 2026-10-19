@@ -113,8 +113,6 @@ interface GeoMapProps {
 export default function GeoMap({ crossings, stations, focus = null }: GeoMapProps) {
     const validCrossings = useMemo(() => crossings.filter((c) => isValid(c.position)), [crossings]);
     const validStations = useMemo(() => stations.filter((s) => isValid(s.position)), [stations]);
-    const skipped =
-        crossings.length - validCrossings.length + stations.length - validStations.length;
 
     const coords = useMemo<[number, number][]>(
         () => [
@@ -135,13 +133,6 @@ export default function GeoMap({ crossings, stations, focus = null }: GeoMapProp
 
     return (
         <div className="geo-map">
-            {skipped > 0 && (
-                <p className="geo-map__note">
-                    {skipped} plotted {skipped === 1 ? "row has" : "rows have"} no coordinates and{" "}
-                    {skipped === 1 ? "was" : "were"} skipped.
-                </p>
-            )}
-
             <MapContainer
                 className="geo-map__canvas"
                 center={[45.9, 25.0]}
