@@ -41,8 +41,8 @@
   --color-panel-muted: #5d6b82;
 
   /* ── Gradients / glows ──────────────────────────────── */
-  --gradient-primary: linear-gradient(135deg, #2dd4bf 0%, #0d9488 55%, #0891b2 100%);
-  --gradient-primary-hover: linear-gradient(135deg, #5eead4 0%, #14b8a6 55%, #06b6d4 100%);
+  --gradient-primary: linear-gradient(135deg, hsl(195 79% 42%) 0%, #0e5f8a 100%);
+  --gradient-primary-hover: linear-gradient(135deg, hsl(195 79% 50%) 0%, #12709f 100%);
   --gradient-brand-text: linear-gradient(100deg, #0d9488 0%, #0891b2 45%, #7c3aed 100%);
   --gradient-panel: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
   --gradient-hero: linear-gradient(90deg, hsl(195 79% 55%) 1%, hsl(196 85% 97%) 100%);
@@ -55,7 +55,7 @@
     radial-gradient(60% 45% at 55% 112%, rgba(8, 145, 178, 0.12) 0%, transparent 55%),
     linear-gradient(180deg, #f7fafd 0%, #f2f5fa 100%);
 
-  --glow-primary: 0 8px 24px -8px rgba(13, 148, 136, 0.55);
+  --glow-primary: 0 8px 24px -8px rgba(14, 95, 138, 0.55);
 
   /* Unique names: Tailwind's @theme block also emits --radius-* vars */
   --rad-sm: 10px;
