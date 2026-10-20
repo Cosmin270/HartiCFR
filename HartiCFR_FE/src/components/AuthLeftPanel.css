@@ -6,7 +6,7 @@
   background: var(--gradient-hero);
   background-size: 160% 160%;
   animation: gradient-drift 14s ease-in-out infinite;
-  color: #fff;
+  color: var(--color-on-hero);
   padding: 56px 56px 40px;
   display: flex;
   flex-direction: column;
@@ -33,21 +33,21 @@
 }
 
 .auth-left__decor .line--a {
-  stroke: #99f6e4;
+  stroke: #0e7490;
 }
 .auth-left__decor .line--b {
-  stroke: #a5f3fc;
+  stroke: #0891b2;
   animation-delay: 0.3s;
 }
 .auth-left__decor .line--c {
-  stroke: #ddd6fe;
-  opacity: 0.85;
+  stroke: #155e75;
+  opacity: 0.6;
   animation-delay: 0.6s;
 }
 
 .auth-left__decor .stop {
-  fill: #0f766e;
-  stroke: #fff;
+  fill: #fff;
+  stroke: #0e7490;
   stroke-width: 2.5;
   opacity: 0;
   animation: stop-in 0.5s var(--ease-spring) 1.6s forwards;
@@ -76,7 +76,7 @@
   border-radius: 12px;
   background: #fff;
   padding: 6px;
-  box-shadow: 0 8px 24px rgba(4, 47, 46, 0.35);
+  box-shadow: 0 8px 24px rgba(6, 44, 61, 0.2);
   transition: transform var(--dur-base) var(--ease-spring);
 }
 
@@ -89,7 +89,7 @@
   font-weight: 700;
   font-size: 1.4rem;
   letter-spacing: -0.02em;
-  color: #fff;
+  color: var(--color-on-hero);
 }
 
 .auth-left__content {
@@ -103,8 +103,7 @@
   font-size: clamp(2rem, 3.4vw, 3rem);
   line-height: 1.12;
   letter-spacing: -0.035em;
-  color: #fff;
-  text-shadow: 0 2px 24px rgba(4, 47, 46, 0.3);
+  color: var(--color-on-hero);
   animation: fade-up var(--dur-slow) var(--ease-out) 0.15s both;
 }
 
@@ -113,7 +112,7 @@
   max-width: 42ch;
   font-size: 1.05rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(6, 44, 61, 0.8);
   animation: fade-up var(--dur-slow) var(--ease-out) 0.3s both;
 }
 

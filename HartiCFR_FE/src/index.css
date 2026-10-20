@@ -45,9 +45,8 @@
   --gradient-primary-hover: linear-gradient(135deg, #5eead4 0%, #14b8a6 55%, #06b6d4 100%);
   --gradient-brand-text: linear-gradient(100deg, #0d9488 0%, #0891b2 45%, #7c3aed 100%);
   --gradient-panel: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
-  --gradient-hero:
-    radial-gradient(120% 140% at 85% 0%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
-    linear-gradient(140deg, #0ea5a0 0%, #0891b2 45%, #6d28d9 115%);
+  --gradient-hero: linear-gradient(90deg, hsl(195 79% 55%) 1%, hsl(196 85% 97%) 100%);
+  --color-on-hero: #062c3d;
   --gradient-app:
     radial-gradient(55% 40% at 8% -6%, rgba(45, 212, 191, 0.2) 0%, transparent 60%),
     radial-gradient(50% 38% at 98% 2%, rgba(124, 58, 237, 0.13) 0%, transparent 60%),
