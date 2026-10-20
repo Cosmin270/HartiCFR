@@ -680,13 +680,13 @@
       }
 
       &:hover {
-        border-color: rgba(13, 148, 136, 0.45);
+        border-color: rgba(22, 149, 192, 0.45);
       }
 
       &:focus {
         outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.14);
+        border-color: #1695c0;
+        box-shadow: 0 0 0 3px rgba(22, 149, 192, 0.16);
       }
     }
 
