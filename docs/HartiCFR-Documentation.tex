@@ -80,8 +80,6 @@
   {\large Documentația proiectului și ghid de utilizare\par}
   \vfill
   {\large Cosmin Mocanu\par}
-  \vspace{0.2cm}
-  {\today\par}
 \end{titlepage}
 
 \setcounter{tocdepth}{2}
@@ -90,37 +88,141 @@
 
 \section{Ce este Harti CFR?}
 
-Harti CFR este o aplicație web pentru consultarea a două seturi de date ale
-rețelei feroviare din România (CFR) și afișarea lor pe o hartă interactivă:
+Harti CFR este o aplicație web care adună într-un singur loc două seturi de
+date despre rețeaua feroviară din România (CFR) -- stațiile de cale ferată și
+trecerile la nivel dotate cu instalații de semnalizare -- și le afișează pe o
+hartă interactivă a țării.
+
+\begin{note}[Unde găsești aplicația]
+Aplicația este publicată la \url{https://harticfr.onrender.com}. Nu trebuie
+instalat nimic: ai nevoie doar de un browser și de o conexiune la internet.
+\end{note}
+
+\subsection{Problema pe care o rezolvă}
+
+Datele de pornire au fost două fișiere CSV (tabele de tip Excel): unul cu
+stațiile și unul cu trecerile la nivel. Într-un
+tabel, fiecare înregistrare are coordonate GPS, dar este greu de înțeles
+\emph{unde} se află de fapt o trecere, ce alte treceri sunt în apropiere sau
+cum sunt distribuite instalațiile de un anumit tip pe teritoriul țării.
+
+Harti CFR transformă aceste tabele într-un instrument de lucru:
 
 \begin{itemize}
-  \item \textbf{Treceri la nivel}: aproximativ 1\,200 de treceri la nivel și
-        instalații din stații, dotate cu echipamente de semnalizare. Pentru
-        fiecare, aplicația reține sucursala regională (SRCF), secția CT,
-        poziția kilometrică, stațiile între care se află, magistrala, tipul
-        instalației de semnalizare, producătorul, regimul de funcționare și
-        coordonatele GPS.
-  \item \textbf{Stații}: aproximativ 2\,300 de stații de cale ferată, fiecare
-        cu codul, numele și coordonatele GPS.
+  \item datele sunt păstrate într-o bază de date, nu în fișiere răspândite;
+  \item oricine are cont le poate consulta dintr-un browser, de pe calculator
+        sau de pe telefon;
+  \item înregistrările pot fi căutate și filtrate după orice coloană;
+  \item orice selecție poate fi afișată imediat pe hartă, unde pozițiile,
+        grupările și distanțele devin evidente.
 \end{itemize}
 
-Utilizatorul își creează un cont, se autentifică, filtrează tabelele până
-rămân înregistrările care îl interesează, le selectează și apasă
-\ui{Render} pentru a le vedea ca puncte pe harta României. Ținând mouse-ul
-deasupra unui punct, se afișează toate detaliile înregistrării respective.
+\subsection{Cui se adresează}
 
-\subsection{Proiectul pe scurt}
+Aplicația este utilă oricui are nevoie de o imagine de ansamblu asupra
+instalațiilor de semnalizare de la trecerile la nivel: de exemplu, pentru a
+vedea toate trecerile dintr-o anumită secție CT, toate instalațiile cu relee
+care funcționează încă manual sau toate echipamentele unui anumit producător
+dintr-o regiune. Nu sunt necesare cunoștințe tehnice -- doar un cont în
+aplicație.
+
+\subsection{Ce poate face aplicația}
+
+\begin{itemize}
+  \item \textbf{Conturi de utilizator}: creare cont, autentificare și
+        deconectare; datele sunt vizibile doar utilizatorilor autentificați.
+  \item \textbf{Două tabele}: \ui{Treceri la nivel} și \ui{Statii}, fiecare cu
+        toate înregistrările din baza de date.
+  \item \textbf{Filtrare pe fiecare coloană}: căutare după text (de exemplu
+        numele unei stații) sau alegere dintr-o listă (de exemplu tipul
+        instalației sau producătorul); filtrele se pot combina.
+  \item \textbf{Selecție}: rânduri individuale sau toate rândurile care
+        corespund filtrelor, dintr-un singur clic; trecerile și stațiile pot
+        fi selectate împreună.
+  \item \textbf{Hartă interactivă}: butonul \ui{Render} afișează selecția pe
+        hartă, cu culori diferite pentru treceri și stații, grupare automată a
+        punctelor apropiate și detalii complete la trecerea mouse-ului.
+  \item \textbf{Straturi}: trecerile și stațiile pot fi ascunse, reafișate
+        sau eliminate separat de pe hartă.
+  \item \textbf{Legătură tabel--hartă}: selectarea unui rând deja afișat mută
+        harta la punctul respectiv și îl evidențiază.
+  \item \textbf{Funcționează și pe telefon}: interfața se adaptează ecranelor
+        mici, iar harta apare sub tabel.
+\end{itemize}
+
+\subsection{Datele din aplicație}
+
+\paragraph{Trecerile la nivel.} Baza de date conține \textbf{1\,211}
+înregistrări: 575 de treceri în linie curentă (\code{LC}) și 636 de
+instalații din stații (\code{Statie}). Ele acoperă toate cele 8 sucursale
+regionale (SRCF), 23 de secții CT și 14 magistrale. Pentru fiecare se
+cunosc:
+
+\begin{itemize}
+  \item \textbf{localizarea}: sucursala (SRCF), secția CT, poziția
+        kilometrică, stațiile între care se află și magistrala;
+  \item \textbf{instalația}: tipul (\code{SAT} sau \code{BAT}), configurația
+        (cu relee, electronică sau necunoscută) și producătorul (Aerofina,
+        Electromagnetica, SPIACT Cr. sau necunoscut);
+  \item \textbf{regimul de funcționare}: automat sau manual;
+  \item \textbf{coordonatele GPS} (longitudine și latitudine).
+\end{itemize}
 
 \begin{center}
-\begin{tabularx}{\textwidth}{@{}lX@{}}
+\begin{tabular}{@{}lr@{\hspace{2.5em}}lr@{\hspace{2.5em}}lr@{}}
 \toprule
-\textbf{Componentă} & \textbf{Tehnologie} \\
+\multicolumn{2}{@{}l}{\textbf{Tip instalație}} &
+\multicolumn{2}{l}{\textbf{Configurație}} &
+\multicolumn{2}{l@{}}{\textbf{Regim}} \\
 \midrule
-Frontend       & React 19, TypeScript, Vite, React Router, Leaflet (hartă), SCSS / Tailwind \\
-Backend        & ASP.NET Core (.NET 10) Web API, Entity Framework Core \\
-Bază de date   & PostgreSQL 16 (rulează local în Docker) \\
-Fundal hartă   & Harta de bază CARTO „Voyager” (necesită o cheie API gratuită) \\
-Autentificare  & Sesiuni pe bază de cookie, parole criptate cu BCrypt \\
+SAT & 761 & Relee      & 1\,036 & Automat & 1\,048 \\
+BAT & 450 & Necunoscut & 127    & Manual  & 163 \\
+    &     & Electronic & 48     &         &     \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Pe sucursale, trecerile sunt distribuite astfel: Iași 225, Timișoara 225,
+Cluj 175, Brașov 145, Craiova 139, Galați 129, București 109 și Constanța 64.
+
+\paragraph{Stațiile.} Baza de date conține \textbf{2\,281} de stații, fiecare
+cu codul oficial, numele și coordonatele GPS. Toate au coordonate valide și
+acoperă întregul teritoriu al țării, de la Jimbolia (vest) până la granița de
+est și de la Dunăre până în nordul Moldovei.
+
+\paragraph{Calitatea datelor.} Doar 2 treceri la nivel nu au coordonate; ele
+apar în tabel, dar nu pot fi afișate pe hartă.
+
+\subsection{Cum se folosește, pe scurt}
+
+\begin{enumerate}
+  \item Deschizi \url{https://harticfr.onrender.com} și îți creezi un cont.
+  \item Te autentifici și ajungi pe dashboard.
+  \item Alegi tab-ul \ui{Treceri la nivel} sau \ui{Statii} și filtrezi
+        tabelul până rămân înregistrările care te interesează.
+  \item Le selectezi (una câte una sau toate deodată) și apeși \ui{Render}.
+  \item Explorezi harta: apropii, depărtezi și ții mouse-ul deasupra
+        punctelor pentru detalii.
+\end{enumerate}
+
+Fiecare pas este descris pe larg în secțiunea~\ref{sec:usage}.
+
+\subsection{Tehnologiile folosite}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Componentă} & \textbf{Tehnologie} & \textbf{Rol} \\
+\midrule
+Frontend      & React 19, TypeScript, Vite & Interfața din browser: pagini, tabele, filtre. \\
+Hartă         & Leaflet, React Leaflet, Leaflet.markercluster & Afișarea hărții, a punctelor și gruparea lor. \\
+Fundal hartă  & CARTO „Voyager” & Imaginile hărții (necesită o cheie API gratuită). \\
+Stiluri       & SCSS, Tailwind CSS & Aspectul paginilor, inclusiv pe telefon. \\
+Backend       & ASP.NET Core (.NET 10) & API-ul care servește datele și gestionează conturile. \\
+Acces la date & Entity Framework Core & Legătura dintre codul C\# și baza de date, migrări automate. \\
+Bază de date  & PostgreSQL & Stocarea utilizatorilor, trecerilor și stațiilor. \\
+Securitate    & Cookie HTTP-only, BCrypt & Sesiuni de autentificare și parole stocate criptat. \\
+Găzduire      & Render, Docker & Publicarea site-ului, a API-ului și a bazei de date. \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -133,9 +235,9 @@ Autentificare  & Sesiuni pe bază de cookie, parole criptate cu BCrypt \\
               minimum height=1.3cm, align=center, font=\small, thick},
   arr/.style={-{Stealth[length=3mm]}, thick},
   lbl/.style={font=\scriptsize, align=center, fill=white, inner sep=2pt}]
-  \node[box, draw=cfrteal]   (browser) {\textbf{Browser}\\Aplicația React\\\scriptsize localhost:5173};
-  \node[box, draw=cfrviolet, right=2.6cm of browser] (api) {\textbf{API backend}\\ASP.NET Core\\\scriptsize localhost:5016};
-  \node[box, draw=gray, right=2.0cm of api] (db) {\textbf{PostgreSQL}\\Container Docker\\\scriptsize localhost:5433};
+  \node[box, draw=cfrteal]   (browser) {\textbf{Browser}\\Aplicația React\\\scriptsize harticfr.onrender.com};
+  \node[box, draw=cfrviolet, right=2.6cm of browser] (api) {\textbf{API backend}\\ASP.NET Core\\\scriptsize harticfr-api.onrender.com};
+  \node[box, draw=gray, right=2.0cm of api] (db) {\textbf{PostgreSQL}\\pe Render\\\scriptsize harticfr-db};
   \node[box, draw=cframber, below=1.4cm of browser] (carto) {\textbf{CARTO}\\fundalul hărții};
 
   \draw[arr] (browser) -- node[lbl, above=2pt] {JSON prin HTTP\\+ cookie de sesiune} (api);
@@ -173,165 +275,36 @@ HartiCFR/
 |   |-- Configuration/           Transformă un URL postgres:// în connection string
 |   |-- appsettings*.json        Configurare (connection string, CORS)
 |   `-- Dockerfile               Imaginea de container folosită în producție
-`-- HartiCFR_FE/                 Frontend (React + Vite)
-    |-- src/
-    |   |-- App.tsx              Rutele paginilor
-    |   |-- pages/               Pagina de start, Login, Creare cont, Dashboard
-    |   |-- components/          DataPanel (tabele), GeoMap (hartă), ...
-    |   |-- lib/api.ts           Adresa backend-ului pentru cereri
-    |   `-- types/               Structurile TypeScript pentru Log și Station
-    |-- public/                  Logo și iconițe
-    |-- .env.example             Descrie variabilele de mediu
-    `-- package.json             Dependențe și scripturi
+|-- HartiCFR_FE/                 Frontend (React + Vite)
+|   |-- src/
+|   |   |-- App.tsx              Rutele paginilor
+|   |   |-- pages/               Pagina de start, Login, Creare cont, Dashboard
+|   |   |-- components/          DataPanel (tabele), GeoMap (hartă), ...
+|   |   |-- lib/api.ts           Adresa backend-ului pentru cereri
+|   |   `-- types/               Structurile TypeScript pentru Log și Station
+|   |-- public/                  Logo și iconițe
+|   |-- .env.example             Descrie variabilele de mediu
+|   `-- package.json             Dependențe și scripturi
+|-- scripts/copy-data-to-render.sh   Copiază datele în baza de date de pe Render
+|-- render.yaml                  Configurația de publicare pe Render
+`-- DEPLOY.md                    Note despre publicare (în engleză)
 \end{codeblock}
 
 
-\section{Rularea proiectului pe calculatorul tău}
+\section{Accesarea aplicației}
 
-\subsection{Ce trebuie instalat}
+Deschide \url{https://harticfr.onrender.com} în orice browser modern
+(Chrome, Firefox, Safari, Edge), pe calculator, tabletă sau telefon.
 
-\begin{center}
-\begin{tabularx}{\textwidth}{@{}llX@{}}
-\toprule
-\textbf{Unealtă} & \textbf{Versiune} & \textbf{Folosită pentru} \\
-\midrule
-.NET SDK        & 10.x             & Compilarea și rularea backend-ului \\
-Node.js         & 20 sau mai nou   & Rularea frontend-ului \\
-pnpm            & 11.x             & Instalarea pachetelor frontend (\code{npm i -g pnpm}) \\
-Docker Desktop  & o versiune recentă & Rularea PostgreSQL \\
-Git             & orice            & Descărcarea codului \\
-\bottomrule
-\end{tabularx}
-\end{center}
+\begin{warning}[Prima încărcare poate dura]
+Aplicația rulează pe planul gratuit Render. După aproximativ 15 minute fără
+vizitatori, serverul intră în repaus, iar prima cerere de după îl trezește în
+aproximativ un minut. Dacă pagina sau tabelele se încarcă greu la prima
+vizită, așteaptă puțin și reîncarcă pagina.
+\end{warning}
 
-Verifică dacă totul este disponibil:
-
-\begin{codeblock}
-dotnet --version
-node --version
-pnpm --version
-docker --version
-\end{codeblock}
-
-\subsection{Pasul 1 -- Descarcă codul}
-
-\begin{codeblock}
-git clone https://github.com/Cosmin270/HartiCFR.git
-cd HartiCFR
-\end{codeblock}
-
-\subsection{Pasul 2 -- Pornește baza de date}
-
-Backend-ul se așteaptă ca PostgreSQL să ruleze pe portul \textbf{5433} (nu pe
-portul implicit 5432, ca să nu intre în conflict cu un Postgres pe care
-l-ai avea deja instalat), cu utilizatorul \code{postgres} și parola
-\code{cfr}. Asigură-te că Docker Desktop este pornit.
-
-\textbf{Doar prima dată} -- creează containerul:
-
-\begin{codeblock}
-docker run --name harticfr-db \
-  -e POSTGRES_PASSWORD=cfr \
-  -p 5433:5432 \
-  -d postgres:16
-\end{codeblock}
-
-\textbf{De fiecare dată după aceea} -- doar repornește-l:
-
-\begin{codeblock}
-docker start harticfr-db
-\end{codeblock}
-
-Nu trebuie să creezi tu baza de date \code{harticfr} sau vreun tabel:
-backend-ul face asta la pornire (vezi secțiunea~\ref{sec:migrations}).
-
-\subsection{Pasul 3 -- Pornește backend-ul}
-
-\begin{codeblock}
-cd HartiCFR_BE
-dotnet run --launch-profile http
-\end{codeblock}
-
-Așteaptă până apare mesajul \code{Now listening on: http://localhost:5016}.
-Verifică dacă funcționează deschizând \url{http://localhost:5016/health} --
-răspunsul trebuie să fie \code{\{"status":"ok"\}}.
-
-\subsection{Pasul 4 -- Configurează cheia pentru hartă}
-
-Fundalul hărții vine de la CARTO, care cere o cheie API gratuită. Fără ea,
-fiecare porțiune de hartă afișează un filigran mare „API KEY REQUIRED”.
-
-\begin{enumerate}
-  \item Cere o cheie la \url{https://carto.com/basemaps/apikey}.
-  \item Creează fișierul \file{HartiCFR\_FE/.env.local} cu conținutul:
-\begin{codeblock}
-VITE_CARTO_API_KEY=cheia-ta-aici
-\end{codeblock}
-\end{enumerate}
-
-Fișierul \file{.env.local} este ignorat de Git, deci cheia nu ajunge
-niciodată într-un commit.
-
-\subsection{Pasul 5 -- Pornește frontend-ul}
-
-Deschide un al doilea terminal (backend-ul continuă să ruleze în primul):
-
-\begin{codeblock}
-cd HartiCFR_FE
-pnpm install      # prima dată sau după modificări în package.json
-pnpm dev
-\end{codeblock}
-
-Deschide \url{http://localhost:5173} în browser.
-
-\begin{note}[Sfat]
-Folosește \code{localhost}, nu \code{127.0.0.1}. Serverul de dezvoltare
-ascultă doar pe \code{localhost}, iar cookie-ul de autentificare este legat
-de acest nume.
-\end{note}
-
-\subsection{Pasul 6 -- Încarcă datele}
-\label{sec:data}
-
-O bază de date nou creată are tabelele, dar \textbf{nu are nicio stație și
-nicio trecere la nivel}, așa că tabelele din dashboard vor fi goale.
-Proiectul nu conține un script de import pentru fișierele sursă
-(\file{Statii Romania\_practica.csv} și
-\file{Treceri cu instalatii de semnalizare\_PRACTICA.csv}); datele au fost
-încărcate manual în baza de date locală a dezvoltatorului.
-
-Cel mai simplu mod de a obține datele este să ceri o copie (dump) a unei baze
-de date existente și să o restaurezi în containerul tău:
-
-\begin{codeblock}
-# pe un calculator care are deja datele
-docker exec harticfr-db pg_dump -U postgres -d harticfr \
-  --data-only -t '"Stations"' -t '"Logs"' > harticfr-data.sql
-
-# pe calculatorul tău
-docker exec -i harticfr-db psql -U postgres -d harticfr < harticfr-data.sql
-\end{codeblock}
-
-Corespondența dintre coloanele din fișierele CSV și baza de date este
-descrisă în secțiunea~\ref{sec:datamodel}.
-
-\subsection{Rezumat rapid}
-
-\begin{center}
-\begin{tabularx}{\textwidth}{@{}lX@{}}
-\toprule
-\textbf{Ce} & \textbf{Adresă} \\
-\midrule
-Site (frontend)   & \url{http://localhost:5173} \\
-API backend       & \url{http://localhost:5016} \\
-Verificare stare  & \url{http://localhost:5016/health} \\
-PostgreSQL        & \code{localhost:5433}, baza \code{harticfr}, utilizator \code{postgres}, parolă \code{cfr} \\
-\bottomrule
-\end{tabularx}
-\end{center}
-
-% ================================================================
 \section{Utilizarea aplicației}
+\label{sec:usage}
 
 Interfața aplicației este în limba engleză, așa că numele butoanelor sunt
 scrise mai jos exact cum apar pe ecran.
@@ -469,8 +442,7 @@ Latitudine   & \code{Position.y}    & Latitudinea GPS (nord). \\
 \bottomrule
 \end{longtable}
 
-Aceste câmpuri provin din fișierul \emph{Treceri cu instalatii de
-semnalizare\_PRACTICA.csv}: \emph{SRCF, Sectia CT, Pozitia km TN, LC/Statie,
+Aceste câmpuri provin din fișierul CSV cu trecerile la nivel: \emph{SRCF, Sectia CT, Pozitia km TN, LC/Statie,
 Amplasare Statia 1 / Statia 2, Numar magistrala, Tip instalatie, Tip
 electro/relee, Producator, Regim de functionare, X longitudine, Y
 latitudine}. Coloanele \emph{In dependenta cu semnale} și \emph{Anul
@@ -492,7 +464,7 @@ Latitudine  & \code{Position.y} & Latitudinea GPS. \\
 \end{tabularx}
 \end{center}
 
-Acestea provin din fișierul \emph{Statii Romania\_practica.csv}
+Acestea provin din fișierul CSV cu stațiile
 (\code{cod, nume, xcoord, ycoord}).
 
 \subsection{Utilizatori (tabelul \code{Users})}
@@ -503,8 +475,10 @@ creării.
 
 \section{Referința API a backend-ului}
 
-Toate endpoint-urile se află la adresa backend-ului
-(\url{http://localhost:5016} local). Corpurile cererilor și răspunsurilor
+Site-ul redirecționează toate cererile \code{/api/...} către backend, deci
+endpoint-urile se apelează prin adresa site-ului,
+\url{https://harticfr.onrender.com}. Excepție face \code{/health}, care se
+află direct pe backend: \url{https://harticfr-api.onrender.com/health}. Corpurile cererilor și răspunsurilor
 sunt în format JSON. Endpoint-urile marcate în coloana \textbf{Auth}
 returnează \code{401 Unauthorized} dacă cererea nu conține cookie-ul de
 sesiune obținut prin \code{/api/auth/login}.
@@ -533,9 +507,9 @@ deci rămâi autentificat între comenzi):
 \begin{codeblock}
 curl -c jar.txt -H 'Content-Type: application/json' \
   -d '{"email":"tu@exemplu.ro","password":"secret"}' \
-  http://localhost:5016/api/auth/login
+  https://harticfr.onrender.com/api/auth/login
 
-curl -b jar.txt http://localhost:5016/api/Station/stations/1
+curl -b jar.txt https://harticfr.onrender.com/api/Station/stations/1
 \end{codeblock}
 
 O trecere la nivel este returnată astfel (valorile enumerărilor sunt trimise
@@ -629,70 +603,48 @@ Migrarea va fi aplicată automat la următoarea pornire a backend-ului.
     punctele grupate pentru fiecare strat, ferestrele cu detalii, încadrarea
     automată și deplasarea către punctul selectat.
   \item[\file{lib/api.ts}] Construiește adresa completă pentru fiecare cerere
-    API (vezi \code{VITE\_API\_URL} mai jos). Toate cererile trimit
+    API. Toate cererile trimit
     \code{credentials: "include"}, astfel încât cookie-ul de sesiune să
     însoțească cererea.
 \end{description}
 
-Comenzi utile pentru frontend (rulate în \file{HartiCFR\_FE}):
+\section{Găzduirea pe Render}
+\label{sec:hosting}
+
+Fișierul \file{render.yaml} descrie cele trei componente create pe Render:
 
 \begin{center}
-\begin{tabularx}{\textwidth}{@{}lX@{}}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
 \toprule
-\code{pnpm dev}     & Server de dezvoltare cu reîncărcare automată, pe portul 5173. \\
-\code{pnpm build}   & Verifică tipurile și construiește site-ul de producție în \file{dist/}. \\
-\code{pnpm preview} & Servește local folderul \file{dist/} construit. \\
-\code{pnpm lint}    & Rulează linter-ul Oxlint. \\
-\bottomrule
-\end{tabularx}
-\end{center}
-
-\section{Referința de configurare}
-
-\subsection{Frontend (\file{HartiCFR\_FE/.env.local})}
-
-\begin{center}
-\begin{tabularx}{\textwidth}{@{}lX@{}}
-\toprule
-\textbf{Variabilă} & \textbf{Semnificație} \\
+\textbf{Serviciu} & \textbf{Tip} & \textbf{Rol} \\
 \midrule
-\code{VITE\_CARTO\_API\_KEY} & Cheia CARTO pentru fundalul hărții. Necesară
-  pentru o hartă fără filigran. Ajunge în codul JavaScript construit, deci
-  este publică prin natura ei. \\
-\code{VITE\_API\_URL} & Adresa de bază a backend-ului. Lasă-o nesetată
-  local (implicit \url{http://localhost:5016}). Se setează doar dacă
-  frontend-ul trebuie să folosească un backend de la altă adresă. \\
+\code{harticfr}     & Site static & Frontend-ul React; redirecționează \code{/api/*} către backend. \\
+\code{harticfr-api} & Docker      & Backend-ul, construit din \file{HartiCFR\_BE/Dockerfile}. \\
+\code{harticfr-db}  & PostgreSQL  & Baza de date. \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-Vite citește aceste variabile la pornirea serverului de dezvoltare sau la
-construirea site-ului, deci repornește \code{pnpm dev} (sau reconstruiește
-site-ul) după ce le modifici.
+Fiecare \code{git push} pe ramura \code{main} republică automat serviciile.
+Pentru browser, API-ul se află la aceeași adresă ca site-ul, ceea ce face ca
+cookie-ul de autentificare să fie „first-party”. Acest lucru contează pentru
+Safari, care blochează cookie-urile de la alte site-uri.
 
-\subsection{Backend}
+\subsection{Datele}
+\label{sec:data}
 
-\begin{center}
-\begin{tabularx}{\textwidth}{@{}lX@{}}
-\toprule
-\textbf{Setare} & \textbf{Semnificație} \\
-\midrule
-\code{ConnectionStrings:DefaultConnection} & Conexiunea la baza de date
-  folosită local; setată în \file{appsettings.Development.json}. \\
-\code{DATABASE\_URL} (variabilă de mediu) & Dacă este setată, o înlocuiește
-  pe cea de mai sus. Acceptă un URL de forma
-  \code{postgres://user:parola@host:port/db}. \\
-\code{Cors:AllowedOrigins} & Listă separată prin virgule cu originile
-  suplimentare care pot apela API-ul (ca variabilă de mediu:
-  \code{Cors\_\_AllowedOrigins}). \\
-\code{ASPNETCORE\_ENVIRONMENT} & \code{Development} local (reguli mai
-  relaxate pentru cookie și CORS, documentul OpenAPI la
-  \code{/openapi/v1.json}); \code{Production} în Docker. \\
-\code{PORT} (variabilă de mediu) & Portul pe care ascultă containerul Docker
-  (implicit 8080). \\
-\bottomrule
-\end{tabularx}
-\end{center}
+Backend-ul creează tabelele automat la pornire, dar datele (stațiile și
+trecerile la nivel) au fost copiate o singură dată dintr-o bază de date
+locală. Dacă baza de date de pe Render este recreată, datele trebuie copiate
+din nou, cu scriptul \file{scripts/copy-data-to-render.sh} și adresa
+\emph{External Database URL} a bazei \code{harticfr-db}. Conturile de
+utilizator nu sunt copiate.
+
+\begin{warning}[Limitele planului gratuit]
+Serviciile gratuite intră în repaus după aproximativ 15 minute fără trafic.
+Bazele de date gratuite expiră după 30 de zile; după recreare, datele trebuie
+copiate din nou, iar utilizatorii trebuie să își creeze din nou conturile.
+\end{warning}
 
 \section{Rezolvarea problemelor}
 
@@ -701,51 +653,35 @@ site-ul) după ce le modifici.
 \textbf{Problemă} & \textbf{Ce faci} \\
 \midrule
 \endhead
-Backend-ul se oprește la pornire cu o eroare de conexiune &
-  Baza de date nu rulează. Pornește Docker Desktop, apoi
-  \code{docker start harticfr-db}. \\[4pt]
-\code{Cannot connect to the Docker daemon} &
-  Docker Desktop nu este deschis. Pornește-l și așteaptă până indică faptul
-  că rulează. \\[4pt]
+Pagina se încarcă foarte greu la prima vizită &
+  Serverul era în repaus (planul gratuit). Așteaptă aproximativ un minut și
+  reîncarcă pagina. \\[4pt]
 „Could not load data. Is the server running?” pe dashboard &
-  Backend-ul nu rulează sau nu este pe portul 5016. Pornește-l (pasul 3). \\[4pt]
+  Backend-ul încă pornește sau nu răspunde. Așteaptă un minut și reîncarcă;
+  dacă problema persistă, verifică starea serviciului \code{harticfr-api} în
+  dashboard-ul Render. \\[4pt]
 Harta afișează „API KEY REQUIRED” &
-  \code{VITE\_CARTO\_API\_KEY} lipsește sau este greșită în
-  \file{HartiCFR\_FE/.env.local}. Corecteaz-o și repornește \code{pnpm dev}. \\[4pt]
+  Cheia CARTO pentru fundalul hărții lipsește sau nu mai este valabilă.
+  Administratorul aplicației trebuie să o actualizeze. \\[4pt]
 Zona hărții este complet gri &
   Nu există conexiune la internet sau imaginile hărții sunt blocate;
   verifică uneltele de dezvoltator ale browserului (tab-ul Network). \\[4pt]
 Tabelele sunt goale („No crossings found”) &
-  Baza de date nu are încă date; vezi secțiunea~\ref{sec:data}. \\[4pt]
+  Baza de date nu are date (de exemplu, a fost recreată); vezi
+  secțiunea~\ref{sec:data}. \\[4pt]
 După crearea contului ajung pe pagina de autentificare &
   Este normal: înregistrarea nu te autentifică. Autentifică-te cu contul
   nou. \\[4pt]
 Autentificarea reușește, dar sunt trimis înapoi la pagina de login &
-  Cookie-ul nu a fost salvat. Local, deschide site-ul pe \code{localhost},
-  nu pe \code{127.0.0.1}. \\[4pt]
-Portul este deja folosit (5016, 5173 sau 5433) &
-  O altă instanță rulează încă. Oprește-o sau găsește-o cu
-  \code{lsof -i :5016}. \\[4pt]
+  Cookie-ul nu a fost salvat. Verifică dacă browserul permite cookie-uri
+  pentru site. \\[4pt]
+Contul meu nu mai există &
+  Baza de date gratuită a fost probabil recreată după 30 de zile. Creează-ți
+  din nou contul. \\[4pt]
 O înregistrare selectată nu apare pe hartă &
   Nu are coordonate (sau are 0,0) în baza de date, deci nu poate fi
   poziționată. \\
 \bottomrule
 \end{longtable}
-
-\section{Limitări cunoscute și idei}
-
-\begin{itemize}
-  \item Înregistrarea nu autentifică automat utilizatorul.
-  \item Nu există resetare a parolei și nici reguli pentru complexitatea
-        parolei sau formatul adresei de e-mail.
-  \item Datele nu pot fi modificate din site. Backend-ul are un endpoint
-        pentru adăugarea unei treceri (\code{POST /api/Log/logs}), dar nicio
-        pagină nu îl folosește și nu există nimic pentru editare sau
-        ștergere.
-  \item Proiectul nu are un script care să importe fișierele CSV în baza de
-        date; o unealtă de import ar ușura mult configurarea pe un calculator
-        nou.
-  \item Nu există teste automate.
-\end{itemize}
 
 \end{document}
