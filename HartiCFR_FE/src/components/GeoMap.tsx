@@ -14,7 +14,7 @@ export type MapFocus = { layer: MapLayer; id: number } | null;
 
 const LAYER_COLORS: Record<MapLayer, string> = {
     crossings: "#0d9488",
-    stations: "#7c3aed",
+    stations: "#ea580c",
 };
 
 const FOCUS_COLOR = "#f59e0b";
