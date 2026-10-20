@@ -47,6 +47,8 @@
   --gradient-panel: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
   --gradient-hero: linear-gradient(90deg, hsl(195 79% 55%) 1%, hsl(196 85% 97%) 100%);
   --color-on-hero: #062c3d;
+  /* Hero gradient, deepened at the end so it reads as text on white */
+  --gradient-wordmark: linear-gradient(90deg, hsl(195 79% 55%) 0%, #0e5f8a 100%);
   --gradient-app:
     radial-gradient(55% 40% at 8% -6%, rgba(45, 212, 191, 0.2) 0%, transparent 60%),
     radial-gradient(50% 38% at 98% 2%, rgba(124, 58, 237, 0.13) 0%, transparent 60%),
