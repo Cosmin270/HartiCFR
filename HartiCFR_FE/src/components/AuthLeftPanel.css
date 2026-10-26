@@ -20,6 +20,10 @@
   height: 100%;
   opacity: 0.55;
   pointer-events: none;
+  /* The copy sits in the lower half; fade the rails out before they reach
+     it so they never run through the text. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 22%, rgba(0, 0, 0, 0.08) 45%, rgba(0, 0, 0, 0.08) 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 22%, rgba(0, 0, 0, 0.08) 45%, rgba(0, 0, 0, 0.08) 100%);
 }
 
 .auth-left__decor .line {
