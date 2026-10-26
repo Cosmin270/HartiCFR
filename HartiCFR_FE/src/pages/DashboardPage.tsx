@@ -10,15 +10,15 @@ import { apiUrl } from "@/lib/api";
 const LOG_COLUMNS: ColumnDef<Log>[] = [
     { key: "id", label: "ID", filter: "text", num: true, get: (l) => l.id },
     { key: "srcf", label: "SRCF", filter: "text", get: (l) => l.srcf },
-    { key: "ct", label: "Sectia CT", filter: "text", get: (l) => l.ct },
+    { key: "ct", label: "Secția CT", filter: "text", get: (l) => l.ct },
     { key: "tnPosition", label: "Km TN", filter: "text", num: true, get: (l) => l.tnPosition },
     { key: "locationType", label: "Tip", filter: "select", get: (l) => l.locationType },
     { key: "start", label: "De la", filter: "text", get: (l) => l.location?.start },
-    { key: "end", label: "Pana la", filter: "text", get: (l) => l.location?.end },
-    { key: "mainLine", label: "Magistrala", filter: "text", get: (l) => l.mainLine },
-    { key: "electricType", label: "Instalatie", filter: "select", get: (l) => l.electricType },
+    { key: "end", label: "Până la", filter: "text", get: (l) => l.location?.end },
+    { key: "mainLine", label: "Magistrală", filter: "text", get: (l) => l.mainLine },
+    { key: "electricType", label: "Instalație", filter: "select", get: (l) => l.electricType },
     { key: "configType", label: "Config", filter: "select", get: (l) => l.configType },
-    { key: "producer", label: "Producator", filter: "select", get: (l) => l.producer },
+    { key: "producer", label: "Producător", filter: "select", get: (l) => l.producer },
     { key: "operatingMode", label: "Regim", filter: "select", get: (l) => l.operatingMode },
     { key: "x", label: "Longitudine", filter: "text", num: true, get: (l) => l.position?.x },
     { key: "y", label: "Latitudine", filter: "text", num: true, get: (l) => l.position?.y },
@@ -27,14 +27,14 @@ const LOG_COLUMNS: ColumnDef<Log>[] = [
 const STATION_COLUMNS: ColumnDef<Station>[] = [
     { key: "id", label: "ID", filter: "text", num: true, get: (s) => s.id },
     { key: "cod", label: "Cod", filter: "text", num: true, get: (s) => s.cod },
-    { key: "name", label: "Nume statie", filter: "text", get: (s) => s.name },
+    { key: "name", label: "Nume stație", filter: "text", get: (s) => s.name },
     { key: "x", label: "Longitudine", filter: "text", num: true, get: (s) => s.position?.x },
     { key: "y", label: "Latitudine", filter: "text", num: true, get: (s) => s.position?.y },
 ];
 
 const TABS: { key: MapLayer; label: string }[] = [
     { key: "crossings", label: "Treceri la nivel" },
-    { key: "stations", label: "Statii" },
+    { key: "stations", label: "Stații" },
 ];
 
 function toggleInSet(prev: Set<number>, id: number): Set<number> {
@@ -58,6 +58,7 @@ export default function DashboardPage() {
     const [stations, setStations] = useState<Station[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [reloadKey, setReloadKey] = useState(0);
 
     const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set());
     const [selectedStations, setSelectedStations] = useState<Set<number>>(new Set());
@@ -72,6 +73,8 @@ export default function DashboardPage() {
         let cancelled = false;
 
         async function load() {
+            setLoading(true);
+            setError("");
             try {
                 const [logsRes, stationsRes] = await Promise.all([
                     fetch(apiUrl("/api/Log/logs"), { credentials: "include" }),
@@ -83,7 +86,7 @@ export default function DashboardPage() {
                     return;
                 }
                 if (!logsRes.ok || !stationsRes.ok) {
-                    throw new Error(`Server responded with ${logsRes.status}/${stationsRes.status}`);
+                    throw new Error(`Serverul a răspuns cu ${logsRes.status}/${stationsRes.status}`);
                 }
 
                 const [logsData, stationsData]: [Log[], Station[]] = await Promise.all([
@@ -95,7 +98,7 @@ export default function DashboardPage() {
                     setStations(stationsData);
                 }
             } catch (err) {
-                if (!cancelled) setError("Could not load data. Is the server running?");
+                if (!cancelled) setError("Nu am putut încărca datele de pe server.");
                 console.error(err);
             } finally {
                 if (!cancelled) setLoading(false);
@@ -106,7 +109,7 @@ export default function DashboardPage() {
         return () => {
             cancelled = true;
         };
-    }, [navigate]);
+    }, [navigate, reloadKey]);
 
     // Refs mirror the latest selection so the toggle callbacks below can stay
     // referentially stable (empty deps). Stable callbacks are what let the
@@ -180,7 +183,7 @@ export default function DashboardPage() {
                     <span className="appbar__wordmark">Harti CFR</span>
                 </div>
 
-                <nav className="appbar__tabs" role="tablist" aria-label="Datasets">
+                <nav className="appbar__tabs" role="tablist" aria-label="Seturi de date">
                     {TABS.map((t) => (
                         <button
                             key={t.key}
@@ -210,44 +213,55 @@ export default function DashboardPage() {
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                         <path d="m16 17 5-5-5-5M21 12H9" />
                     </svg>
-                    Log out
+                    Deconectare
                 </button>
             </header>
 
             <main className="dashboard__body">
                 <div className="dashboard__head">
                     <h1 className="dashboard__title">
-                        {tab === "crossings" ? "Treceri la nivel" : "Statii"}
+                        {tab === "crossings" ? "Treceri la nivel" : "Stații"}
                     </h1>
                     <div className="stat-row">
                         <div className="stat">
                             <span className="stat__value">{loading ? "—" : activeRecords}</span>
-                            <span className="stat__label">Records</span>
+                            <span className="stat__label">Înregistrări</span>
                         </div>
                         <div className="stat">
                             <span className="stat__value">{totalSelected}</span>
                             <span className="stat__label">
-                                Selected{totalSelected > activeSelected ? ` (${activeSelected} here)` : ""}
+                                Selectate{totalSelected > activeSelected ? ` (${activeSelected} aici)` : ""}
                             </span>
                         </div>
                         <div className="stat stat--accent">
                             <span className="stat__value">{plottedCount}</span>
-                            <span className="stat__label">Plotted</span>
+                            <span className="stat__label">Pe hartă</span>
                         </div>
                     </div>
                 </div>
 
-                {error && <p className="dashboard__error">{error}</p>}
+                {error && (
+                    <div className="dashboard__error" role="alert">
+                        <span>{error}</span>
+                        <button
+                            type="button"
+                            className="btn-clear"
+                            onClick={() => setReloadKey((k) => k + 1)}
+                        >
+                            Reîncearcă
+                        </button>
+                    </div>
+                )}
 
                 {!error && (
                     <div className="dashboard__grid">
                         <div className="dashboard__tables">
                             <DataPanel
-                                title="Crossings"
+                                title="Treceri la nivel"
                                 columns={LOG_COLUMNS}
                                 rows={logs}
                                 loading={loading}
-                                emptyText="No crossings found."
+                                emptyText="Nu există treceri la nivel."
                                 selected={selectedLogs}
                                 focusedId={focus?.layer === "crossings" ? focus.id : null}
                                 onToggleRow={toggleLogRow}
@@ -260,11 +274,11 @@ export default function DashboardPage() {
                                 hidden={tab !== "crossings"}
                             />
                             <DataPanel
-                                title="Stations"
+                                title="Stații"
                                 columns={STATION_COLUMNS}
                                 rows={stations}
                                 loading={loading}
-                                emptyText="No stations found."
+                                emptyText="Nu există stații."
                                 selected={selectedStations}
                                 focusedId={focus?.layer === "stations" ? focus.id : null}
                                 onToggleRow={toggleStationRow}
@@ -281,19 +295,19 @@ export default function DashboardPage() {
                         <section className="panel panel--map" ref={mapPanelRef}>
                             <div className="panel__head">
                                 <h2 className="panel__title">
-                                    Map
+                                    Hartă
                                     <span className="panel__meta">
-                                        {plottedCount > 0 ? `${plottedCount} plotted` : "empty"}
+                                        {plottedCount > 0 ? `${plottedCount} pe hartă` : "goală"}
                                     </span>
                                 </h2>
-                                <div className="layer-legend" aria-label="Map layers">
+                                <div className="layer-legend" aria-label="Straturi hartă">
                                     <div className="layer-chip layer-chip--crossings">
                                         <button
                                             type="button"
                                             className={`layer-chip__toggle${showCrossings ? "" : " is-off"}`}
                                             onClick={() => setShowCrossings((v) => !v)}
                                             aria-pressed={showCrossings}
-                                            title={showCrossings ? "Hide crossings layer" : "Show crossings layer"}
+                                            title={showCrossings ? "Ascunde trecerile la nivel" : "Arată trecerile la nivel"}
                                         >
                                             <span className="layer-chip__dot" />
                                             Treceri
@@ -304,8 +318,8 @@ export default function DashboardPage() {
                                                 type="button"
                                                 className="layer-chip__clear"
                                                 onClick={() => clearLayer("crossings")}
-                                                aria-label="Remove crossings from map"
-                                                title="Remove crossings from map"
+                                                aria-label="Elimină trecerile de pe hartă"
+                                                title="Elimină trecerile de pe hartă"
                                             >
                                                 ×
                                             </button>
@@ -317,10 +331,10 @@ export default function DashboardPage() {
                                             className={`layer-chip__toggle${showStations ? "" : " is-off"}`}
                                             onClick={() => setShowStations((v) => !v)}
                                             aria-pressed={showStations}
-                                            title={showStations ? "Hide stations layer" : "Show stations layer"}
+                                            title={showStations ? "Ascunde stațiile" : "Arată stațiile"}
                                         >
                                             <span className="layer-chip__dot" />
-                                            Statii
+                                            Stații
                                             <span className="layer-chip__count">{renderedStations.length}</span>
                                         </button>
                                         {renderedStations.length > 0 && (
@@ -328,8 +342,8 @@ export default function DashboardPage() {
                                                 type="button"
                                                 className="layer-chip__clear"
                                                 onClick={() => clearLayer("stations")}
-                                                aria-label="Remove stations from map"
-                                                title="Remove stations from map"
+                                                aria-label="Elimină stațiile de pe hartă"
+                                                title="Elimină stațiile de pe hartă"
                                             >
                                                 ×
                                             </button>
@@ -346,8 +360,8 @@ export default function DashboardPage() {
                                             <path d="M9 4v14M15 6v14" />
                                         </svg>
                                         <p>
-                                            Select rows and press <strong>Render</strong> to plot them here.
-                                            Crossings and stations can be plotted together.
+                                            Bifează rânduri din tabel și apasă <strong>Afișează pe hartă</strong>.
+                                            Trecerile la nivel și stațiile pot fi afișate împreună.
                                         </p>
                                     </div>
                                 </div>

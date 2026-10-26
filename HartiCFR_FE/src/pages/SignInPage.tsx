@@ -1,11 +1,16 @@
 import AuthLeftPanel from "../components/AuthLeftPanel";
+import { ServerBanner, useServerStatus } from "../components/ServerStatus";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./AuthForm.scss";
 import { apiUrl } from "@/lib/api";
 
+const MIN_PASSWORD_LENGTH = 6;
+
 export default function SignInPage() {
     const navigate = useNavigate();
+    const { state: server } = useServerStatus();
+    const serverReady = server === "ready";
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -16,6 +21,22 @@ export default function SignInPage() {
     const handleSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+
+        // Catch the obvious mistakes before a round trip; the server repeats
+        // these checks and has the final word.
+        if (!username.trim()) {
+            setError("Introdu un nume.");
+            return;
+        }
+        if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+            setError("Adresa de email nu este validă.");
+            return;
+        }
+        if (password.length < MIN_PASSWORD_LENGTH) {
+            setError(`Parola trebuie să aibă cel puțin ${MIN_PASSWORD_LENGTH} caractere.`);
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -30,13 +51,13 @@ export default function SignInPage() {
 
             if (!res.ok) {
                 const message = await res.text();
-                setError(message || "Failed to create your account. Please try again.");
+                setError(message || "Nu am putut crea contul. Încearcă din nou.");
                 return;
             }
 
             navigate("/dashboard");
         } catch (err) {
-            setError("Could not reach the server. Please try again.");
+            setError("Nu am putut contacta serverul. Încearcă din nou.");
             console.error(err);
         } finally {
             setLoading(false);
@@ -50,15 +71,17 @@ export default function SignInPage() {
             <div className="auth-page__right">
                 <div className="auth-card">
                     <div className="auth-card__header">
-                        <h2 className="auth-card__title">Create your account</h2>
+                        <h2 className="auth-card__title">Creează-ți contul</h2>
                         <p className="auth-card__subtitle">
-                            Join Harti CFR and start exploring the rail network.
+                            Alătură-te Harti CFR și explorează rețeaua feroviară.
                         </p>
                     </div>
 
+                    <ServerBanner />
+
                     <form className="auth-form" onSubmit={handleSignIn} noValidate>
                         <div className="auth-field">
-                            <label className="auth-field__label" htmlFor="signin-name">Name</label>
+                            <label className="auth-field__label" htmlFor="signin-name">Nume</label>
                             <div className="auth-field__control">
                                 <svg className="auth-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                     <circle cx="12" cy="8" r="4" />
@@ -67,7 +90,7 @@ export default function SignInPage() {
                                 <input
                                     id="signin-name"
                                     type="text"
-                                    placeholder="Your name"
+                                    placeholder="Numele tău"
                                     autoComplete="name"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
@@ -86,7 +109,7 @@ export default function SignInPage() {
                                 <input
                                     id="signin-email"
                                     type="email"
-                                    placeholder="you@example.com"
+                                    placeholder="nume@exemplu.ro"
                                     autoComplete="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -96,7 +119,7 @@ export default function SignInPage() {
                         </div>
 
                         <div className="auth-field">
-                            <label className="auth-field__label" htmlFor="signin-password">Password</label>
+                            <label className="auth-field__label" htmlFor="signin-password">Parolă</label>
                             <div className="auth-field__control">
                                 <svg className="auth-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                     <rect x="4" y="11" width="16" height="9" rx="2" />
@@ -105,7 +128,7 @@ export default function SignInPage() {
                                 <input
                                     id="signin-password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="Create a password"
+                                    placeholder={`Minimum ${MIN_PASSWORD_LENGTH} caractere`}
                                     autoComplete="new-password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -115,7 +138,7 @@ export default function SignInPage() {
                                     type="button"
                                     className="auth-field__toggle"
                                     onClick={() => setShowPassword((s) => !s)}
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    aria-label={showPassword ? "Ascunde parola" : "Arată parola"}
                                 >
                                     {showPassword ? (
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -143,16 +166,20 @@ export default function SignInPage() {
                             </p>
                         )}
 
-                        <button type="submit" className="btn btn--primary" disabled={loading}>
+                        <button type="submit" className="btn btn--primary" disabled={loading || !serverReady}>
                             {loading ? <span className="btn__spinner" aria-hidden="true" /> : null}
-                            {loading ? "Creating account…" : "Create account"}
+                            {loading
+                                ? "Se creează contul…"
+                                : serverReady
+                                  ? "Creează contul"
+                                  : "Se așteaptă serverul…"}
                         </button>
                     </form>
 
                     <p className="auth-switch">
-                        Already have an account?
+                        Ai deja cont?
                         <button type="button" onClick={() => navigate("/login")}>
-                            Log in
+                            Autentifică-te
                         </button>
                     </p>
                 </div>

@@ -1,11 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import AuthLeftPanel from "../components/AuthLeftPanel";
+import DemoLoginButton from "../components/DemoLoginButton";
+import { ServerBanner, useServerStatus } from "../components/ServerStatus";
 import "./AuthForm.scss";
 import { apiUrl } from "@/lib/api";
 
 export default function LoginPage() {
     const navigate = useNavigate();
+    const { state: server } = useServerStatus();
+    const serverReady = server === 'ready';
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -28,13 +32,17 @@ export default function LoginPage() {
             });
 
             if (!res.ok) {
-                setError('Invalid email or password. Please try again.');
+                setError(
+                    res.status === 401
+                        ? 'Email sau parolă greșită. Încearcă din nou.'
+                        : 'A apărut o eroare pe server. Încearcă din nou.'
+                );
                 return;
             }
 
             navigate("/dashboard");
         } catch (err) {
-            setError('Could not reach the server. Please try again.');
+            setError('Nu am putut contacta serverul. Încearcă din nou.');
             console.error(err);
         } finally {
             setLoading(false);
@@ -48,11 +56,13 @@ export default function LoginPage() {
             <div className="auth-page__right">
                 <div className="auth-card">
                     <div className="auth-card__header">
-                        <h2 className="auth-card__title">Welcome back</h2>
+                        <h2 className="auth-card__title">Bine ai revenit</h2>
                         <p className="auth-card__subtitle">
-                            Log in to your Harti CFR account.
+                            Intră în contul tău Harti CFR.
                         </p>
                     </div>
+
+                    <ServerBanner />
 
                     <form className="auth-form" onSubmit={handleSubmit} noValidate>
                         <div className="auth-field">
@@ -65,7 +75,7 @@ export default function LoginPage() {
                                 <input
                                     id="login-email"
                                     type="email"
-                                    placeholder="you@example.com"
+                                    placeholder="nume@exemplu.ro"
                                     autoComplete="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -75,7 +85,7 @@ export default function LoginPage() {
                         </div>
 
                         <div className="auth-field">
-                            <label className="auth-field__label" htmlFor="login-password">Password</label>
+                            <label className="auth-field__label" htmlFor="login-password">Parolă</label>
                             <div className="auth-field__control">
                                 <svg className="auth-field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                     <rect x="4" y="11" width="16" height="9" rx="2" />
@@ -84,7 +94,7 @@ export default function LoginPage() {
                                 <input
                                     id="login-password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="Enter your password"
+                                    placeholder="Introdu parola"
                                     autoComplete="current-password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -94,7 +104,7 @@ export default function LoginPage() {
                                     type="button"
                                     className="auth-field__toggle"
                                     onClick={() => setShowPassword((s) => !s)}
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    aria-label={showPassword ? "Ascunde parola" : "Arată parola"}
                                 >
                                     {showPassword ? (
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -122,16 +132,23 @@ export default function LoginPage() {
                             </p>
                         )}
 
-                        <button type="submit" className="btn btn--primary" disabled={loading}>
+                        <button type="submit" className="btn btn--primary" disabled={loading || !serverReady}>
                             {loading ? <span className="btn__spinner" aria-hidden="true" /> : null}
-                            {loading ? "Logging in…" : "Log in"}
+                            {loading
+                                ? "Se autentifică…"
+                                : serverReady
+                                  ? "Autentificare"
+                                  : "Se așteaptă serverul…"}
                         </button>
                     </form>
 
+                    <div className="auth-divider" aria-hidden="true">sau</div>
+                    <DemoLoginButton disabled={!serverReady} onError={setError} />
+
                     <p className="auth-switch">
-                        Don't have an account?
+                        Nu ai cont?
                         <button type="button" onClick={() => navigate("/signin")}>
-                            Create one
+                            Creează unul
                         </button>
                     </p>
                 </div>

@@ -173,15 +173,15 @@ export default function GeoMap({ crossings, stations, focus = null }: GeoMapProp
                                         </strong>
                                         <ul>
                                             <li><span>SRCF</span>{log.srcf}</li>
-                                            <li><span>Sectia CT</span>{log.ct}</li>
+                                            <li><span>Secția CT</span>{log.ct}</li>
                                             <li><span>Km TN</span>{log.tnPosition}</li>
                                             <li><span>Tip</span>{log.locationType}</li>
-                                            <li><span>Magistrala</span>{log.mainLine || "—"}</li>
-                                            <li><span>Instalatie</span>{log.electricType}</li>
+                                            <li><span>Magistrală</span>{log.mainLine || "—"}</li>
+                                            <li><span>Instalație</span>{log.electricType}</li>
                                             <li><span>Config</span>{log.configType}</li>
-                                            <li><span>Producator</span>{log.producer}</li>
+                                            <li><span>Producător</span>{log.producer}</li>
                                             <li><span>Regim</span>{log.operatingMode}</li>
-                                            <li><span>Coord</span>{log.position.y.toFixed(5)}, {log.position.x.toFixed(5)}</li>
+                                            <li><span>Coordonate</span>{log.position.y.toFixed(5)}, {log.position.x.toFixed(5)}</li>
                                         </ul>
                                     </div>
                                 </Tooltip>
@@ -214,9 +214,9 @@ export default function GeoMap({ crossings, stations, focus = null }: GeoMapProp
                                             {station.name}
                                         </strong>
                                         <ul>
-                                            <li><span>Tip</span>Statie</li>
+                                            <li><span>Tip</span>Stație</li>
                                             <li><span>Cod</span>{station.cod}</li>
-                                            <li><span>Coord</span>{station.position.y.toFixed(5)}, {station.position.x.toFixed(5)}</li>
+                                            <li><span>Coordonate</span>{station.position.y.toFixed(5)}, {station.position.x.toFixed(5)}</li>
                                         </ul>
                                     </div>
                                 </Tooltip>

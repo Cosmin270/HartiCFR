@@ -37,7 +37,7 @@ function TableRowInner<T extends { id: number }>({
                     checked={isSel}
                     onChange={() => onToggle(row.id)}
                     onClick={(e) => e.stopPropagation()}
-                    aria-label={`Select row ${row.id}`}
+                    aria-label={`Selectează rândul ${row.id}`}
                 />
             </td>
             {columns.map((col) => (
@@ -128,21 +128,21 @@ export default function DataPanel<T extends { id: number }>({
                     {title}
                     <span className="panel__meta">
                         {loading
-                            ? "Loading…"
+                            ? "Se încarcă…"
                             : anyFilterActive
-                              ? `${filtered.length} of ${rows.length} rows`
-                              : `${rows.length} rows`}
+                              ? `${filtered.length} din ${rows.length} rânduri`
+                              : `${rows.length} rânduri`}
                     </span>
                 </h2>
                 <div className="panel__actions">
                     {anyFilterActive && (
                         <button type="button" className="btn-clear" onClick={() => setFilters({})}>
-                            Clear filters
+                            Șterge filtrele
                         </button>
                     )}
                     {selected.size > 0 && (
                         <button type="button" className="btn-clear" onClick={onClearSelection}>
-                            Clear selection
+                            Deselectează tot
                         </button>
                     )}
                     <button
@@ -155,7 +155,7 @@ export default function DataPanel<T extends { id: number }>({
                             <path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z" />
                             <circle cx="12" cy="10" r="2.5" />
                         </svg>
-                        Render {plotCount > 0 ? `(${plotCount})` : ""}
+                        Afișează pe hartă {plotCount > 0 ? `(${plotCount})` : ""}
                     </button>
                 </div>
             </div>
@@ -177,7 +177,7 @@ export default function DataPanel<T extends { id: number }>({
                                     type="checkbox"
                                     checked={allSelected}
                                     onChange={() => onSelectMany(filteredIds, !allSelected)}
-                                    aria-label="Select all filtered rows"
+                                    aria-label="Selectează toate rândurile filtrate"
                                     disabled={loading || filtered.length === 0}
                                 />
                             </th>
@@ -187,10 +187,10 @@ export default function DataPanel<T extends { id: number }>({
                                         <select
                                             value={filters[col.key] ?? ""}
                                             onChange={(e) => setFilter(col.key, e.target.value)}
-                                            aria-label={`Filter ${col.label}`}
+                                            aria-label={`Filtrează după ${col.label}`}
                                             disabled={loading}
                                         >
-                                            <option value="">All</option>
+                                            <option value="">Toate</option>
                                             {selectOptions[col.key]?.map((opt) => (
                                                 <option key={opt} value={opt}>
                                                     {opt}
@@ -202,8 +202,8 @@ export default function DataPanel<T extends { id: number }>({
                                             type="text"
                                             value={filters[col.key] ?? ""}
                                             onChange={(e) => setFilter(col.key, e.target.value)}
-                                            placeholder="Filter…"
-                                            aria-label={`Filter ${col.label}`}
+                                            placeholder="Filtrează…"
+                                            aria-label={`Filtrează după ${col.label}`}
                                             disabled={loading}
                                         />
                                     )}
@@ -241,7 +241,7 @@ export default function DataPanel<T extends { id: number }>({
                                 <td colSpan={columns.length + 1} className="log-table__empty">
                                     {rows.length === 0
                                         ? emptyText
-                                        : "No rows match the current filters."}
+                                        : "Niciun rând nu corespunde filtrelor."}
                                 </td>
                             </tr>
                         )}
