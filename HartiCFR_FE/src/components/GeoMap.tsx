@@ -21,6 +21,46 @@ import "./GeoMap.scss";
 
 export type MapLayer = "crossings" | "stations";
 export type MapFocus = { layer: MapLayer; id: number } | null;
+export type BaseMap = "standard" | "satellite" | "terrain";
+
+const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+interface TileSource {
+    label: string;
+    url: string;
+    attribution: string;
+    // Zoom levels past this are upscaled from the last available tiles.
+    maxNativeZoom: number;
+}
+
+const BASE_LAYERS: Record<BaseMap, TileSource> = {
+    standard: {
+        label: "Hartă",
+        url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${import.meta.env.VITE_CARTO_API_KEY ?? ""}`,
+        attribution: `${OSM_ATTRIBUTION} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
+        maxNativeZoom: 19,
+    },
+    satellite: {
+        label: "Satelit",
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attribution: "Imagini &copy; Esri, Maxar, Earthstar Geographics",
+        maxNativeZoom: 19,
+    },
+    terrain: {
+        label: "Relief",
+        url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+        attribution: `${OSM_ATTRIBUTION}, SRTM &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)`,
+        maxNativeZoom: 17,
+    },
+};
+
+// Railway lines drawn over any base map, from the OpenRailwayMap project.
+const RAILWAY_LAYER: TileSource = {
+    label: "Căi ferate",
+    url: "https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",
+    attribution: '<a href="https://www.openrailwaymap.org/">OpenRailwayMap</a> (CC-BY-SA)',
+    maxNativeZoom: 19,
+};
 
 const LAYER_COLORS: Record<MapLayer, string> = {
     crossings: "#0d9488",
@@ -318,6 +358,12 @@ function SizeWatcher() {
 }
 
 interface GeoMapProps {
+    baseMap: BaseMap;
+    onBaseMapChange: (base: BaseMap) => void;
+    railways: boolean;
+    onRailwaysChange: (on: boolean) => void;
+    fullscreen: boolean;
+    onFullscreenChange: (on: boolean) => void;
     crossings: Log[];
     stations: Station[];
     // Every station, plotted or not, for the nearest-station lookup.
@@ -327,7 +373,22 @@ interface GeoMapProps {
     onPick: PickHandler;
 }
 
-function GeoMap({ crossings, stations, allStations, colorBy, focus = null, onPick }: GeoMapProps) {
+function GeoMap({
+    baseMap,
+    onBaseMapChange,
+    railways,
+    onRailwaysChange,
+    fullscreen,
+    onFullscreenChange,
+    crossings,
+    stations,
+    allStations,
+    colorBy,
+    focus = null,
+    onPick,
+}: GeoMapProps) {
+    const base = BASE_LAYERS[baseMap];
+
     const validCrossings = useMemo(() => crossings.filter((c) => hasPosition(c.position)), [crossings]);
     const validStations = useMemo(() => stations.filter((s) => hasPosition(s.position)), [stations]);
 
@@ -380,11 +441,25 @@ function GeoMap({ crossings, stations, allStations, colorBy, focus = null, onPic
                 center={[45.9, 25.0]}
                 zoom={6}
                 scrollWheelZoom
+                maxZoom={19}
             >
+                {/* Keyed so switching remounts the layer and its attribution. */}
                 <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                    url={`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${import.meta.env.VITE_CARTO_API_KEY ?? ""}`}
+                    key={baseMap}
+                    url={base.url}
+                    attribution={base.attribution}
+                    maxNativeZoom={base.maxNativeZoom}
+                    maxZoom={19}
                 />
+                {railways && (
+                    <TileLayer
+                        url={RAILWAY_LAYER.url}
+                        attribution={RAILWAY_LAYER.attribution}
+                        maxNativeZoom={RAILWAY_LAYER.maxNativeZoom}
+                        maxZoom={19}
+                        zIndex={2}
+                    />
+                )}
 
                 <SizeWatcher />
                 <FitBounds coords={coords} />
@@ -401,6 +476,51 @@ function GeoMap({ crossings, stations, allStations, colorBy, focus = null, onPic
                 <NearestLink crossing={focusedCrossing} stations={allStations} />
                 <FocusMarker target={focusTarget} />
             </MapContainer>
+
+            <div className="map-tools">
+                <div className="map-tools__group" role="group" aria-label="Fundalul hărții">
+                    {(Object.keys(BASE_LAYERS) as BaseMap[]).map((key) => (
+                        <button
+                            key={key}
+                            type="button"
+                            className={`map-tools__seg${key === baseMap ? " is-active" : ""}`}
+                            aria-pressed={key === baseMap}
+                            onClick={() => onBaseMapChange(key)}
+                        >
+                            {BASE_LAYERS[key].label}
+                        </button>
+                    ))}
+                </div>
+                <button
+                    type="button"
+                    className={`map-tools__btn${railways ? " is-active" : ""}`}
+                    aria-pressed={railways}
+                    onClick={() => onRailwaysChange(!railways)}
+                    title="Arată liniile de cale ferată (OpenRailwayMap)"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <path d="M8 3 5 21M16 3l3 18M7 8h10M6 14h12" />
+                    </svg>
+                    {RAILWAY_LAYER.label}
+                </button>
+                <button
+                    type="button"
+                    className="map-tools__btn map-tools__btn--icon"
+                    onClick={() => onFullscreenChange(!fullscreen)}
+                    aria-label={fullscreen ? "Ieși din modul ecran complet" : "Hartă pe tot ecranul"}
+                    title={fullscreen ? "Ieși din ecran complet (Esc)" : "Hartă pe tot ecranul"}
+                >
+                    {fullscreen ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+                        </svg>
+                    ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+                        </svg>
+                    )}
+                </button>
+            </div>
 
             {colorDef && legend.length > 0 && (
                 <div className="geo-map__legend" aria-label={`Legendă: ${colorDef.label}`}>

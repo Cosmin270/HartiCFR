@@ -2,12 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Log } from "../types/log";
 import type { Station } from "../types/station";
-import DataPanel, { type ColumnDef, type Filters } from "../components/DataPanel";
-import GeoMap, { type MapFocus, type MapLayer } from "../components/GeoMap";
+import DataPanel, { type ColumnDef, type Filters, type Sort } from "../components/DataPanel";
+import GeoMap, { type BaseMap, type MapFocus, type MapLayer } from "../components/GeoMap";
+import { useToast } from "../components/Toast";
 import GlobalSearch from "../components/GlobalSearch";
 import StatsPanel from "../components/StatsPanel";
 import "./DashboardPage.scss";
 import { apiUrl } from "@/lib/api";
+import { hasPosition } from "@/lib/geo";
+import { clearUiState, loadUiState, saveUiState } from "@/lib/storage";
+import { countOf } from "@/lib/text";
 import {
     CROSSING_ATTRIBUTES,
     locationTypeLabel,
@@ -73,6 +77,36 @@ const TABS: { key: Tab; label: string; short: string; title: string; icon: React
 
 const NO_FILTERS: Filters = {};
 
+const BASE_MAPS: BaseMap[] = ["standard", "satellite", "terrain"];
+
+// What the dashboard remembers across a refresh (see lib/storage.ts).
+// Records are stored by id and matched against the data once it loads.
+interface SavedUi {
+    tab: Tab;
+    logFilters: Filters;
+    stationFilters: Filters;
+    logSort: Sort | null;
+    stationSort: Sort | null;
+    colorBy: CrossingAttribute | null;
+    baseMap: BaseMap;
+    railways: boolean;
+    selectedLogs: number[];
+    selectedStations: number[];
+    renderedLogs: number[];
+    renderedStations: number[];
+    showCrossings: boolean;
+    showStations: boolean;
+}
+
+function readSavedUi(): Partial<SavedUi> {
+    const saved = loadUiState<SavedUi>();
+    // Drop anything that no longer matches what the app understands.
+    if (saved.tab && !TABS.some((t) => t.key === saved.tab)) delete saved.tab;
+    if (saved.baseMap && !BASE_MAPS.includes(saved.baseMap)) delete saved.baseMap;
+    if (saved.colorBy && !CROSSING_ATTRIBUTES.some((a) => a.key === saved.colorBy)) delete saved.colorBy;
+    return saved;
+}
+
 // Shared empty lists for hidden map layers, so hiding a layer does not hand
 // the memoized map a new array on every render.
 const NO_LOGS: Log[] = [];
@@ -93,7 +127,9 @@ function setManyInSet(prev: Set<number>, ids: number[], select: boolean): Set<nu
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const [tab, setTab] = useState<Tab>("crossings");
+    const toast = useToast();
+    const [saved] = useState(readSavedUi);
+    const [tab, setTab] = useState<Tab>(saved.tab ?? "crossings");
 
     const [logs, setLogs] = useState<Log[]>([]);
     const [stations, setStations] = useState<Station[]>([]);
@@ -101,17 +137,25 @@ export default function DashboardPage() {
     const [error, setError] = useState("");
     const [reloadKey, setReloadKey] = useState(0);
 
-    const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set());
-    const [selectedStations, setSelectedStations] = useState<Set<number>>(new Set());
+    const [selectedLogs, setSelectedLogs] = useState<Set<number>>(() => new Set(saved.selectedLogs));
+    const [selectedStations, setSelectedStations] = useState<Set<number>>(() => new Set(saved.selectedStations));
     const [renderedLogs, setRenderedLogs] = useState<Log[]>([]);
     const [renderedStations, setRenderedStations] = useState<Station[]>([]);
-    const [showCrossings, setShowCrossings] = useState(true);
-    const [showStations, setShowStations] = useState(true);
+    const [showCrossings, setShowCrossings] = useState(saved.showCrossings ?? true);
+    const [showStations, setShowStations] = useState(saved.showStations ?? true);
     const [focus, setFocus] = useState<MapFocus>(null);
-    const [logFilters, setLogFilters] = useState<Filters>(NO_FILTERS);
-    const [stationFilters, setStationFilters] = useState<Filters>(NO_FILTERS);
-    const [colorBy, setColorBy] = useState<CrossingAttribute | null>(null);
+    const [logFilters, setLogFilters] = useState<Filters>(saved.logFilters ?? NO_FILTERS);
+    const [stationFilters, setStationFilters] = useState<Filters>(saved.stationFilters ?? NO_FILTERS);
+    const [logSort, setLogSort] = useState<Sort | null>(saved.logSort ?? null);
+    const [stationSort, setStationSort] = useState<Sort | null>(saved.stationSort ?? null);
+    const [colorBy, setColorBy] = useState<CrossingAttribute | null>(saved.colorBy ?? null);
+    const [baseMap, setBaseMap] = useState<BaseMap>(saved.baseMap ?? "standard");
+    const [railways, setRailways] = useState(saved.railways ?? false);
+    const [mapFull, setMapFull] = useState(false);
     const mapPanelRef = useRef<HTMLElement>(null);
+    // Set once the saved map contents have been matched against loaded data;
+    // until then, saving would overwrite them with the empty initial state.
+    const restoredRef = useRef(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -140,6 +184,17 @@ export default function DashboardPage() {
                 if (!cancelled) {
                     setLogs(logsData);
                     setStations(stationsData);
+                    if (!restoredRef.current) {
+                        restoredRef.current = true;
+                        const logIds = new Set(logsData.map((l) => l.id));
+                        const stationIds = new Set(stationsData.map((s) => s.id));
+                        const plottedLogs = new Set(saved.renderedLogs);
+                        const plottedStations = new Set(saved.renderedStations);
+                        setSelectedLogs((prev) => new Set([...prev].filter((id) => logIds.has(id))));
+                        setSelectedStations((prev) => new Set([...prev].filter((id) => stationIds.has(id))));
+                        setRenderedLogs(logsData.filter((l) => plottedLogs.has(l.id)));
+                        setRenderedStations(stationsData.filter((s) => plottedStations.has(s.id)));
+                    }
                 }
             } catch (err) {
                 if (!cancelled) setError("Nu am putut încărca datele de pe server.");
@@ -153,7 +208,58 @@ export default function DashboardPage() {
         return () => {
             cancelled = true;
         };
-    }, [navigate, reloadKey]);
+    }, [navigate, reloadKey, saved]);
+
+    useEffect(() => {
+        if (!restoredRef.current) return;
+        saveUiState<SavedUi>({
+            tab,
+            logFilters,
+            stationFilters,
+            logSort,
+            stationSort,
+            colorBy,
+            baseMap,
+            railways,
+            selectedLogs: [...selectedLogs],
+            selectedStations: [...selectedStations],
+            renderedLogs: renderedLogs.map((l) => l.id),
+            renderedStations: renderedStations.map((s) => s.id),
+            showCrossings,
+            showStations,
+        });
+    }, [
+        tab,
+        logFilters,
+        stationFilters,
+        logSort,
+        stationSort,
+        colorBy,
+        baseMap,
+        railways,
+        selectedLogs,
+        selectedStations,
+        renderedLogs,
+        renderedStations,
+        showCrossings,
+        showStations,
+    ]);
+
+    const plottedCount = renderedLogs.length + renderedStations.length;
+
+    // Fullscreen map: Escape leaves it, and the page behind must not scroll.
+    useEffect(() => {
+        if (!mapFull || plottedCount === 0) return;
+        function onKey(e: KeyboardEvent) {
+            if (e.key === "Escape") setMapFull(false);
+        }
+        window.addEventListener("keydown", onKey);
+        document.body.classList.add("is-map-fullscreen");
+        return () => {
+            window.removeEventListener("keydown", onKey);
+            document.body.classList.remove("is-map-fullscreen");
+        };
+    }, [mapFull, plottedCount]);
 
     // Refs mirror the latest selection so the toggle callbacks below can stay
     // referentially stable (empty deps). Stable callbacks are what let the
@@ -176,10 +282,24 @@ export default function DashboardPage() {
     }, []);
 
     function renderAll() {
-        setRenderedLogs(logs.filter((l) => selectedLogs.has(l.id)));
-        setRenderedStations(stations.filter((s) => selectedStations.has(s.id)));
+        const nextLogs = logs.filter((l) => selectedLogs.has(l.id));
+        const nextStations = stations.filter((s) => selectedStations.has(s.id));
+        setRenderedLogs(nextLogs);
+        setRenderedStations(nextStations);
         setShowCrossings(true);
         setShowStations(true);
+
+        // Records without coordinates cannot be placed; say so instead of
+        // leaving the user to wonder why the map shows fewer points.
+        const unplaced =
+            nextLogs.filter((l) => !hasPosition(l.position)).length +
+            nextStations.filter((s) => !hasPosition(s.position)).length;
+        if (unplaced > 0) {
+            toast({
+                tone: "warning",
+                message: `${countOf(unplaced, "înregistrare selectată nu are", "înregistrări selectate nu au")} coordonate, deci nu ${unplaced === 1 ? "apare" : "apar"} pe hartă.`,
+            });
+        }
 
         // Stacked layout: the map lives below the table and is off-screen, so
         // rendering would look like nothing happened. Bring it into view.
@@ -234,9 +354,41 @@ export default function DashboardPage() {
     }, []);
 
     function clearLayer(layer: MapLayer) {
+        const previous = layer === "crossings" ? renderedLogs : renderedStations;
         if (layer === "crossings") setRenderedLogs([]);
         else setRenderedStations([]);
         setFocus(null);
+        toast({
+            message: `Am eliminat de pe hartă ${
+                layer === "crossings"
+                    ? countOf(previous.length, "trecere", "treceri")
+                    : countOf(previous.length, "stație", "stații")
+            }.`,
+            action: {
+                label: "Anulează",
+                onClick: () =>
+                    layer === "crossings"
+                        ? setRenderedLogs(previous as Log[])
+                        : setRenderedStations(previous as Station[]),
+            },
+        });
+    }
+
+    function clearSelection(layer: MapLayer) {
+        const previous = layer === "crossings" ? selectedLogs : selectedStations;
+        if (layer === "crossings") setSelectedLogs(new Set());
+        else setSelectedStations(new Set());
+        toast({
+            message: `Am deselectat ${
+                layer === "crossings"
+                    ? countOf(previous.size, "trecere", "treceri")
+                    : countOf(previous.size, "stație", "stații")
+            }.`,
+            action: {
+                label: "Anulează",
+                onClick: () => (layer === "crossings" ? setSelectedLogs(previous) : setSelectedStations(previous)),
+            },
+        });
     }
 
     async function handleLogout() {
@@ -248,12 +400,13 @@ export default function DashboardPage() {
         } catch {
             void 0;
         }
+        // The next person on this browser starts from a clean dashboard.
+        clearUiState();
         navigate("/login");
     }
 
     const visibleCrossings = showCrossings ? renderedLogs : NO_LOGS;
     const visibleStations = showStations ? renderedStations : NO_STATIONS;
-    const plottedCount = renderedLogs.length + renderedStations.length;
     const activeRecords = tab === "stations" ? stations.length : logs.length;
     const activeSelected = tab === "crossings" ? selectedLogs.size : selectedStations.size;
     const totalSelected = selectedLogs.size + selectedStations.size;
@@ -359,12 +512,14 @@ export default function DashboardPage() {
                                 selected={selectedLogs}
                                 filters={logFilters}
                                 onFiltersChange={setLogFilters}
+                                sort={logSort}
+                                onSortChange={setLogSort}
                                 focusedId={focus?.layer === "crossings" ? focus.id : null}
                                 onToggleRow={toggleLogRow}
                                 onSelectMany={(ids, select) =>
                                     setSelectedLogs((prev) => setManyInSet(prev, ids, select))
                                 }
-                                onClearSelection={() => setSelectedLogs(new Set())}
+                                onClearSelection={() => clearSelection("crossings")}
                                 onRender={renderAll}
                                 renderCount={totalSelected}
                                 hidden={tab !== "crossings"}
@@ -379,19 +534,25 @@ export default function DashboardPage() {
                                 selected={selectedStations}
                                 filters={stationFilters}
                                 onFiltersChange={setStationFilters}
+                                sort={stationSort}
+                                onSortChange={setStationSort}
                                 focusedId={focus?.layer === "stations" ? focus.id : null}
                                 onToggleRow={toggleStationRow}
                                 onSelectMany={(ids, select) =>
                                     setSelectedStations((prev) => setManyInSet(prev, ids, select))
                                 }
-                                onClearSelection={() => setSelectedStations(new Set())}
+                                onClearSelection={() => clearSelection("stations")}
                                 onRender={renderAll}
                                 renderCount={totalSelected}
                                 hidden={tab !== "stations"}
                             />
                         </div>
 
-                        <section className="panel panel--map" ref={mapPanelRef}>
+                        <section
+                            className={`panel panel--map${mapFull && plottedCount > 0 ? " is-fullscreen" : ""}`}
+                            ref={mapPanelRef}
+                            aria-label={mapFull ? "Hartă pe tot ecranul" : undefined}
+                        >
                             <div className="panel__head">
                                 <h2 className="panel__title">
                                     Hartă
@@ -489,6 +650,12 @@ export default function DashboardPage() {
                                             colorBy={colorBy}
                                             focus={focus}
                                             onPick={pickOnMap}
+                                            baseMap={baseMap}
+                                            onBaseMapChange={setBaseMap}
+                                            railways={railways}
+                                            onRailwaysChange={setRailways}
+                                            fullscreen={mapFull}
+                                            onFullscreenChange={setMapFull}
                                         />
                                     </div>
                                 )}

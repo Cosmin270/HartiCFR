@@ -1,10 +1,32 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { downloadCsv, toCsv, todayStamp } from "@/lib/csv";
-import { fold } from "@/lib/text";
+import { countOf, fold } from "@/lib/text";
+import { useToast } from "./Toast";
 
 export type ColumnFilter = "text" | "select";
 
 export type Filters = Record<string, string>;
+
+export interface Sort {
+    key: string;
+    dir: "asc" | "desc";
+}
+
+const collator = new Intl.Collator("ro", { numeric: true, sensitivity: "base" });
+
+function compareValues(a: string | number | undefined, b: string | number | undefined, num: boolean): number {
+    // A blank counts as greater than any value, so it sorts after them.
+    const aBlank = a === undefined || a === null || a === "";
+    const bBlank = b === undefined || b === null || b === "";
+    if (aBlank || bBlank) return aBlank === bBlank ? 0 : aBlank ? 1 : -1;
+    return num ? Number(a) - Number(b) : collator.compare(String(a), String(b));
+}
+
+// Header click cycles: ascending → descending → original order.
+function nextSort(current: Sort | null, key: string): Sort | null {
+    if (current?.key !== key) return { key, dir: "asc" };
+    return current.dir === "asc" ? { key, dir: "desc" } : null;
+}
 
 // Rows are mounted in pages as the user scrolls. Mounting all ~2,300 at once
 // made every tab switch, "select all" and filter change lay out the full
@@ -72,6 +94,8 @@ interface DataPanelProps<T extends { id: number }> {
     // open the table already filtered.
     filters: Filters;
     onFiltersChange: (filters: Filters) => void;
+    sort: Sort | null;
+    onSortChange: (sort: Sort | null) => void;
     focusedId?: number | null;
     onToggleRow: (id: number) => void;
     onSelectMany: (ids: number[], select: boolean) => void;
@@ -91,6 +115,8 @@ export default function DataPanel<T extends { id: number }>({
     selected,
     filters,
     onFiltersChange,
+    sort,
+    onSortChange,
     focusedId = null,
     onToggleRow,
     onSelectMany,
@@ -99,6 +125,7 @@ export default function DataPanel<T extends { id: number }>({
     renderCount,
     hidden = false,
 }: DataPanelProps<T>) {
+    const toast = useToast();
     const plotCount = renderCount ?? selected.size;
     const [limit, setLimit] = useState(PAGE_SIZE);
     const wrapRef = useRef<HTMLDivElement>(null);
@@ -133,12 +160,27 @@ export default function DataPanel<T extends { id: number }>({
         );
     }, [rows, columns, filters]);
 
+    const sorted = useMemo(() => {
+        const col = sort ? columns.find((c) => c.key === sort.key) : undefined;
+        if (!sort || !col) return filtered;
+        const sign = sort.dir === "asc" ? 1 : -1;
+        return [...filtered].sort((a, b) => {
+            const va = col.get(a);
+            const vb = col.get(b);
+            const blankA = va === undefined || va === "";
+            const blankB = vb === undefined || vb === "";
+            // Keep blanks at the bottom whichever way the column is sorted.
+            if (blankA || blankB) return compareValues(va, vb, !!col.num);
+            return sign * compareValues(va, vb, !!col.num);
+        });
+    }, [filtered, columns, sort]);
+
     const anyFilterActive = Object.values(filters).some((v) => v !== "");
     const filteredIds = useMemo(() => filtered.map((r) => r.id), [filtered]);
     const allSelected =
         filtered.length > 0 && filteredIds.every((id) => selected.has(id));
 
-    const visible = useMemo(() => filtered.slice(0, limit), [filtered, limit]);
+    const visible = useMemo(() => sorted.slice(0, limit), [sorted, limit]);
     const hasMore = limit < filtered.length;
 
     // Grow the window when the placeholder row nears the bottom of the scroll
@@ -159,11 +201,11 @@ export default function DataPanel<T extends { id: number }>({
         return () => observer.disconnect();
     }, [hasMore, hidden, limit]);
 
-    // A new filter set starts again from the first page.
+    // A new filter set or sort order starts again from the first page.
     useEffect(() => {
         setLimit(PAGE_SIZE);
         wrapRef.current?.scrollTo({ top: 0 });
-    }, [filters]);
+    }, [filters, sort]);
 
     // Bring a newly focused row (picked on the map or in search) into view,
     // mounting more pages first if it sits further down. The pending ref makes
@@ -176,7 +218,7 @@ export default function DataPanel<T extends { id: number }>({
     useEffect(() => {
         const id = pendingFocusRef.current;
         if (id === null || hidden) return;
-        const index = filtered.findIndex((r) => r.id === id);
+        const index = sorted.findIndex((r) => r.id === id);
         if (index < 0) {
             pendingFocusRef.current = null;
             return;
@@ -189,7 +231,7 @@ export default function DataPanel<T extends { id: number }>({
         wrapRef.current
             ?.querySelector(`tr[data-id="${id}"]`)
             ?.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, [focusedId, hidden, filtered, limit]);
+    }, [focusedId, hidden, sorted, limit]);
 
     function setFilter(key: string, value: string) {
         onFiltersChange({ ...filters, [key]: value });
@@ -202,9 +244,13 @@ export default function DataPanel<T extends { id: number }>({
     function exportCsv() {
         const csv = toCsv(
             columns.map((c) => c.label),
-            filtered.map((row) => columns.map((c) => c.get(row)))
+            sorted.map((row) => columns.map((c) => c.get(row)))
         );
         downloadCsv(`${exportName}-${todayStamp()}.csv`, csv);
+        toast({
+            tone: "success",
+            message: `Am exportat ${countOf(sorted.length, "rând", "rânduri")} în fișierul CSV.`,
+        });
     }
 
     return (
@@ -263,11 +309,35 @@ export default function DataPanel<T extends { id: number }>({
                     <thead>
                         <tr className="head-labels">
                             <th className="check" aria-hidden="true" />
-                            {columns.map((col) => (
-                                <th key={col.key} className={col.num ? "num" : undefined}>
-                                    {col.label}
-                                </th>
-                            ))}
+                            {columns.map((col) => {
+                                const dir = sort?.key === col.key ? sort.dir : null;
+                                return (
+                                    <th
+                                        key={col.key}
+                                        className={col.num ? "num" : undefined}
+                                        aria-sort={dir === "asc" ? "ascending" : dir === "desc" ? "descending" : "none"}
+                                    >
+                                        <button
+                                            type="button"
+                                            className={`sort-btn${dir ? " is-sorted" : ""}`}
+                                            onClick={() => onSortChange(nextSort(sort, col.key))}
+                                            title={
+                                                dir === "asc"
+                                                    ? "Sortat crescător. Apasă pentru descrescător."
+                                                    : dir === "desc"
+                                                      ? "Sortat descrescător. Apasă pentru ordinea inițială."
+                                                      : `Sortează după ${col.label}`
+                                            }
+                                        >
+                                            {col.label}
+                                            <svg viewBox="0 0 12 12" aria-hidden="true">
+                                                <path className={dir === "asc" ? "on" : undefined} d="M6 1.5 9 5H3z" />
+                                                <path className={dir === "desc" ? "on" : undefined} d="M6 10.5 3 7h6z" />
+                                            </svg>
+                                        </button>
+                                    </th>
+                                );
+                            })}
                         </tr>
                         <tr className="head-filters">
                             <th className="check">
@@ -345,9 +415,16 @@ export default function DataPanel<T extends { id: number }>({
                         {!loading && filtered.length === 0 && (
                             <tr>
                                 <td colSpan={columns.length + 1} className="log-table__empty">
-                                    {rows.length === 0
-                                        ? emptyText
-                                        : "Niciun rând nu corespunde filtrelor."}
+                                    {rows.length === 0 ? (
+                                        emptyText
+                                    ) : (
+                                        <div className="log-table__no-match">
+                                            <p>Niciun rând nu corespunde filtrelor.</p>
+                                            <button type="button" className="btn-clear" onClick={clearFilters}>
+                                                Șterge filtrele
+                                            </button>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         )}

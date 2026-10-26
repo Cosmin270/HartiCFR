@@ -405,3 +405,34 @@ $field-height: 48px;
     margin: -11px 0 -11px 2px;
   }
 }
+
+/* 404 page, built from the auth card */
+.not-found {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 24px 16px;
+
+  &__card {
+    text-align: center;
+  }
+
+  &__code {
+    font-family: var(--font-head);
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--surface-3);
+    -webkit-text-stroke: 1.5px var(--color-border-strong);
+  }
+
+  &__actions {
+    margin-top: 28px;
+  }
+
+  .auth-card__title {
+    margin-top: 12px;
+  }
+}

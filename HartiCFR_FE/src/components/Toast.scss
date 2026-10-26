@@ -1,0 +1,111 @@
+.toast-stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 12px 10px 12px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--rad-sm);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-pop);
+  color: var(--color-foreground);
+  pointer-events: auto;
+  animation: toast-in var(--dur-base) var(--ease-out) both;
+
+  &__icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--color-secondary);
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &--success &__icon {
+    background: #16a34a;
+  }
+
+  &--warning &__icon {
+    background: #d97706;
+  }
+
+  &__message {
+    flex: 1;
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+
+  &__action {
+    flex: none;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--color-primary);
+    font-family: var(--font-head);
+    font-size: 0.82rem;
+    font-weight: 650;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--surface-3);
+    }
+  }
+
+  &__close {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-muted-foreground);
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--surface-3);
+      color: var(--color-foreground);
+    }
+  }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .toast-stack {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    align-items: stretch;
+  }
+
+  .toast {
+    width: auto;
+  }
+}

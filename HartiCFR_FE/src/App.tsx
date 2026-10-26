@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import SignInPage from "./pages/SignInPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
 
@@ -15,6 +16,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
             </Route>
+            <Route path="*" element={<NotFoundPage />} />
         </Routes>
     );
 }

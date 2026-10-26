@@ -106,6 +106,91 @@
   }
 }
 
+/* Base map switcher, railway overlay and fullscreen, top-right of the map */
+.map-tools {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 500;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: calc(100% - 70px);
+
+  &__group {
+    display: flex;
+    padding: 3px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 10px;
+    background: var(--surface-1);
+    box-shadow: var(--shadow-card);
+  }
+
+  &__seg,
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--color-muted-foreground);
+    font-family: var(--font-head);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+
+    svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    &:hover {
+      color: var(--color-foreground);
+      background: var(--surface-3);
+    }
+  }
+
+  &__seg.is-active {
+    background: var(--gradient-primary);
+    color: var(--color-on-primary);
+  }
+
+  &__btn {
+    min-height: 38px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 10px;
+    background: var(--surface-1);
+    box-shadow: var(--shadow-card);
+
+    &.is-active {
+      border-color: var(--color-secondary);
+      color: var(--color-secondary);
+      background: rgba(8, 145, 178, 0.08);
+    }
+
+    &--icon {
+      width: 38px;
+      padding: 0;
+      justify-content: center;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .map-tools__btn:not(.map-tools__btn--icon) {
+    font-size: 0;
+    gap: 0;
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
 /* Category legend for the coloured crossings layer */
 .geo-map__legend {
   position: absolute;

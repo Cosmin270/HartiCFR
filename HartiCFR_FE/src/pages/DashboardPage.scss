@@ -625,6 +625,34 @@
   }
 }
 
+/* ── Fullscreen map ─────────────────────────────────────────
+   The panel itself is pinned over the page (not the browser Fullscreen
+   API, which iOS Safari does not offer for elements), keeping its header
+   with the layer chips and colour control. */
+
+.panel--map.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  height: auto;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  animation: none;
+
+  .map-swap,
+  .geo-map,
+  .geo-map__canvas {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+  }
+}
+
+body.is-map-fullscreen {
+  overflow: hidden;
+}
+
 /* ── Data table ─────────────────────────────────────────── */
 
 .log-table-wrap {
@@ -685,6 +713,52 @@
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.07em;
+  }
+
+  // Sortable header: the whole label is the button, so the hit area covers
+  // the cell rather than just the arrow.
+  .sort-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: -4px -6px;
+    padding: 4px 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+
+    svg {
+      flex: none;
+      width: 10px;
+      height: 10px;
+
+      path {
+        fill: currentColor;
+        opacity: 0.28;
+      }
+
+      path.on {
+        opacity: 1;
+      }
+    }
+
+    &:hover {
+      color: var(--color-foreground);
+      background: var(--surface-3);
+    }
+
+    &.is-sorted {
+      color: var(--color-primary);
+    }
+  }
+
+  th.num .sort-btn {
+    flex-direction: row-reverse;
   }
 
   thead tr.head-filters th {
@@ -824,6 +898,13 @@
     text-align: center !important;
     padding: 32px !important;
     color: var(--color-muted-foreground);
+  }
+
+  &__no-match {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
 
   tr.log-table__more td {
