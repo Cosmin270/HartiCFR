@@ -13,11 +13,11 @@ export function locationTypeLabel(value: string): string {
     return value === "Statie" ? "Stație" : value;
 }
 
-// Categorical colours, validated as a set (all pairs, light surface) for
-// colour-vision deficiency. Only three hues: points on a map are compared
+// Categorical colours, validated as a set (all pairs, on both the light and
+// the dark surface) for colour-vision deficiency. Only three hues: points on a map are compared
 // all-against-all, and a fourth hue would not stay distinguishable. Unknown
 // values always take the neutral gray rather than a hue.
-export const CATEGORY_HUES = ["#2a78d6", "#eb6834", "#1baf7a"] as const;
+export const CATEGORY_HUES = ["#2a78d6", "#e8652f", "#1baf7a"] as const;
 export const NEUTRAL = "#98a2b3";
 
 export type CrossingAttribute =

@@ -17,6 +17,7 @@ import {
     type CrossingAttribute,
 } from "@/lib/categories";
 import { formatNumber } from "@/lib/text";
+import { useTheme } from "@/lib/theme";
 import "./GeoMap.scss";
 
 export type MapLayer = "crossings" | "stations";
@@ -52,6 +53,11 @@ const BASE_LAYERS: Record<BaseMap, TileSource> = {
         attribution: `${OSM_ATTRIBUTION}, SRTM &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)`,
         maxNativeZoom: 17,
     },
+};
+
+const DARK_STANDARD: TileSource = {
+    ...BASE_LAYERS.standard,
+    url: BASE_LAYERS.standard.url.replace("/voyager/", "/dark_all/"),
 };
 
 // Railway lines drawn over any base map, from the OpenRailwayMap project.
@@ -387,7 +393,9 @@ function GeoMap({
     focus = null,
     onPick,
 }: GeoMapProps) {
-    const base = BASE_LAYERS[baseMap];
+    const theme = useTheme();
+    // The street map has a dark twin; satellite and relief look the same in both themes.
+    const base = baseMap === "standard" && theme === "dark" ? DARK_STANDARD : BASE_LAYERS[baseMap];
 
     const validCrossings = useMemo(() => crossings.filter((c) => hasPosition(c.position)), [crossings]);
     const validStations = useMemo(() => stations.filter((s) => hasPosition(s.position)), [stations]);
@@ -445,7 +453,7 @@ function GeoMap({
             >
                 {/* Keyed so switching remounts the layer and its attribution. */}
                 <TileLayer
-                    key={baseMap}
+                    key={base.url}
                     url={base.url}
                     attribution={base.attribution}
                     maxNativeZoom={base.maxNativeZoom}

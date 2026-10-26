@@ -1,6 +1,6 @@
 // Single-series bars use one hue; the categorical hues are kept for the
 // share bars, where colour carries identity.
-$bar-color: #1695c0;
+$bar-color: var(--color-bar);
 
 .stats {
   display: flex;

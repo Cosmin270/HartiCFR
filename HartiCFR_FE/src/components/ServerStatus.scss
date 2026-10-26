@@ -38,8 +38,8 @@
   &--down {
     align-items: center;
     justify-content: space-between;
-    background: #fef2f2;
-    border-color: #fecaca;
+    background: var(--danger-bg);
+    border-color: var(--danger-border);
     color: var(--color-destructive);
   }
 
@@ -47,9 +47,9 @@
     flex-shrink: 0;
     min-height: 36px;
     padding: 0 14px;
-    border: 1px solid #fca5a5;
+    border: 1px solid var(--danger-border-strong);
     border-radius: 999px;
-    background: #fff;
+    background: var(--surface-1);
     color: var(--color-destructive);
     font-family: var(--font-head);
     font-weight: 600;
@@ -57,7 +57,7 @@
     cursor: pointer;
 
     &:hover {
-      background: #fff5f5;
+      background: var(--danger-bg-hover);
     }
   }
 }

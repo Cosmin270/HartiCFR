@@ -38,8 +38,8 @@
     gap: 12px;
     padding: 14px 16px;
     border-radius: var(--rad-sm);
-    background: #fef2f2;
-    border: 1px solid #fecaca;
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
     color: var(--color-destructive);
     font-size: 0.9rem;
     animation: fade-up var(--dur-base) var(--ease-out) both;
@@ -154,7 +154,7 @@
     padding: 4px;
     border: 1px solid var(--color-border);
     border-radius: 999px;
-    background: rgba(238, 242, 248, 0.8);
+    background: var(--surface-3);
   }
 
   &__tab {
@@ -210,7 +210,7 @@
     padding: 0 14px;
     border: 1px solid var(--color-border-strong);
     border-radius: 999px;
-    background: #fff;
+    background: var(--surface-input);
     color: var(--color-muted-foreground);
     font-family: var(--font-head);
     font-weight: 600;
@@ -228,8 +228,8 @@
     }
 
     &:hover {
-      background: #fef2f2;
-      border-color: #fca5a5;
+      background: var(--danger-bg);
+      border-color: var(--danger-border-strong);
       color: var(--color-destructive);
       transform: translateY(-1px);
     }
@@ -251,7 +251,7 @@
   height: 12px;
   width: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, var(--surface-3) 25%, #fff 50%, var(--surface-3) 75%);
+  background: linear-gradient(90deg, var(--surface-3) 25%, var(--surface-skeleton-shine) 50%, var(--surface-3) 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.3s ease-in-out infinite;
 }
@@ -383,7 +383,7 @@
   align-items: stretch;
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface-input);
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
@@ -459,7 +459,7 @@
 
     &:hover {
       color: var(--color-destructive);
-      background: #fef2f2;
+      background: var(--danger-bg);
     }
   }
 }
@@ -493,7 +493,7 @@
     gap: 10px 12px;
     padding: 12px 16px;
     border-bottom: 1px solid var(--color-border);
-    background: linear-gradient(180deg, #fff 0%, var(--surface-2) 100%);
+    background: linear-gradient(180deg, var(--surface-1) 0%, var(--surface-2) 100%);
   }
 
   &__title {
@@ -765,7 +765,7 @@ body.is-map-fullscreen {
     top: 34px;
     z-index: 1;
     padding: 6px 8px;
-    background: #fff;
+    background: var(--surface-1);
     border-bottom: 1px solid var(--color-border-strong);
 
     input,
@@ -776,24 +776,24 @@ body.is-map-fullscreen {
       padding: 0 8px;
       border: 1px solid var(--color-border-strong);
       border-radius: 7px;
-      background: #fff;
+      background: var(--surface-input);
       color: var(--color-foreground);
       font-family: var(--font-body);
       font-size: 0.75rem;
       transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
 
       &::placeholder {
-        color: rgba(93, 107, 130, 0.55);
+        color: var(--color-placeholder);
       }
 
       &:hover {
-        border-color: rgba(22, 149, 192, 0.45);
+        border-color: var(--color-field-focus);
       }
 
       &:focus {
         outline: none;
-        border-color: #1695c0;
-        box-shadow: 0 0 0 3px rgba(22, 149, 192, 0.16);
+        border-color: var(--color-field-focus);
+        box-shadow: 0 0 0 3px var(--field-focus-ring);
       }
     }
 
@@ -819,15 +819,15 @@ body.is-map-fullscreen {
   }
 
   tbody tr:nth-child(even) {
-    background: rgba(16, 24, 40, 0.025);
+    background: var(--row-stripe);
   }
 
   tbody tr:hover {
-    background: rgba(20, 184, 166, 0.09);
+    background: var(--row-selected);
   }
 
   tbody tr.is-selected {
-    background: rgba(20, 184, 166, 0.15);
+    background: var(--row-selected-hover);
     box-shadow: inset 2px 0 0 0 var(--color-primary-bright);
   }
 
@@ -835,12 +835,12 @@ body.is-map-fullscreen {
   // Amber is the complementary partner to the teal primary, so it reads as
   // "active" without colliding with the teal selection tint.
   tbody tr.is-focused {
-    background: rgba(245, 158, 11, 0.14);
+    background: var(--row-focused);
     box-shadow: inset 3px 0 0 0 var(--color-focus);
   }
 
   tbody tr.is-focused:hover {
-    background: rgba(245, 158, 11, 0.2);
+    background: var(--row-focused-hover);
   }
 
   tbody td {
@@ -881,7 +881,7 @@ body.is-map-fullscreen {
   thead tr.head-filters th.check {
     top: 34px;
     z-index: 3;
-    background: #fff;
+    background: var(--surface-1);
     text-align: center;
     border-bottom: 1px solid var(--color-border-strong);
 
@@ -984,7 +984,7 @@ body.is-map-fullscreen {
   padding: 0 14px;
   border: 1px solid var(--color-border-strong);
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface-input);
   color: var(--color-muted-foreground);
   font-family: var(--font-head);
   font-weight: 600;
@@ -1038,7 +1038,7 @@ body.is-map-fullscreen {
     padding: 0 8px;
     border: 1px solid var(--color-border-strong);
     border-radius: 8px;
-    background: #fff;
+    background: var(--surface-input);
     color: var(--color-foreground);
     font-family: var(--font-body);
     font-size: 0.8rem;
@@ -1260,15 +1260,15 @@ body.is-map-fullscreen {
     }
 
     tbody tr:nth-child(even) .check {
-      background: #f4f6f9;
+      background: var(--row-pinned-stripe);
     }
 
     tbody tr.is-selected .check {
-      background: #dff3f0;
+      background: var(--row-pinned-selected);
     }
 
     tbody tr.is-focused .check {
-      background: #fdf0da;
+      background: var(--row-pinned-focused);
     }
 
     thead tr.head-labels th.check,
@@ -1301,6 +1301,14 @@ body.is-map-fullscreen {
 
 /* Very narrow phones: reclaim the last of the horizontal space. */
 @media (max-width: 380px) {
+  .appbar {
+    gap: 8px;
+  }
+
+  .appbar__end {
+    gap: 6px;
+  }
+
   .appbar__wordmark {
     font-size: 1rem;
   }

@@ -1,3 +1,4 @@
+import ThemeToggle from './ThemeToggle';
 import './AuthLeftPanel.css';
 
 const FEATURES = [
@@ -49,6 +50,7 @@ export default function AuthLeftPanel() {
       <div className="auth-left__brand">
         <img src="/logo.png" alt="Harti CFR" className="auth-left__logo" />
         <span className="auth-left__wordmark">Harti CFR</span>
+        <ThemeToggle className="auth-left__theme" />
       </div>
 
       <div className="auth-left__content">

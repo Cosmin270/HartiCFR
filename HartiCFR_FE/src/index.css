@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is([data-theme="dark"] *));
 
 :root {
   /* ── Brand ──────────────────────────────────────────── */
@@ -25,6 +25,12 @@
   /* Sticky chrome that content scrolls underneath: must stay legible even
      where backdrop-filter is not applied (Safari). */
   --surface-bar: #ffffff;
+  /* Fields and controls that sit on a surface */
+  --surface-input: #ffffff;
+  /* Map overlays and the auth card, over busy backgrounds */
+  --surface-overlay: rgba(255, 255, 255, 0.95);
+  --surface-card: rgba(255, 255, 255, 0.85);
+  --surface-skeleton-shine: #ffffff;
 
   --color-foreground: #101828;
   --color-muted: #eef2f8;
@@ -33,6 +39,28 @@
   --color-border-strong: rgba(16, 24, 40, 0.16);
   --color-destructive: #dc2626;
   --color-ring: #0d9488;
+  --color-placeholder: #8792a6;
+  /* Deep blue used for text on tinted backgrounds and focus borders */
+  --color-link: #0e5f8a;
+  --color-field-focus: #1695c0;
+  --field-focus-ring: rgba(22, 149, 192, 0.15);
+  --color-bar: #1695c0;
+
+  --danger-bg: #fef2f2;
+  --danger-bg-hover: #fff5f5;
+  --danger-border: #fecaca;
+  --danger-border-strong: #fca5a5;
+
+  /* Table rows. The pinned first column needs solid versions of the same
+     tints so the cells scrolling under it stay hidden. */
+  --row-stripe: rgba(16, 24, 40, 0.025);
+  --row-selected: rgba(20, 184, 166, 0.09);
+  --row-selected-hover: rgba(20, 184, 166, 0.15);
+  --row-focused: rgba(245, 158, 11, 0.14);
+  --row-focused-hover: rgba(245, 158, 11, 0.2);
+  --row-pinned-stripe: #f4f6f9;
+  --row-pinned-selected: #dff3f0;
+  --row-pinned-focused: #fdf0da;
 
   /* Legacy panel aliases */
   --color-panel: #ffffff;
@@ -47,6 +75,12 @@
   --gradient-panel: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
   --gradient-hero: linear-gradient(90deg, hsl(195 79% 55%) 1%, hsl(196 85% 97%) 100%);
   --color-on-hero: #062c3d;
+  --color-on-hero-soft: rgba(6, 44, 61, 0.8);
+  --hero-chip: rgba(255, 255, 255, 0.7);
+  --hero-rail-a: #0e7490;
+  --hero-rail-b: #0891b2;
+  --hero-rail-c: #155e75;
+  --hero-stop: #ffffff;
   /* Hero gradient, deepened at the end so it reads as text on white */
   --gradient-wordmark: linear-gradient(90deg, hsl(195 79% 55%) 0%, #0e5f8a 100%);
   --gradient-app:
@@ -119,6 +153,114 @@
   color-scheme: light;
 }
 
+/* Dark theme. The surfaces are a deep navy rather than grey so the blue
+   brand gradients still sit naturally on them. */
+:root[data-theme="dark"] {
+  --color-primary: #2dd4bf;
+  --color-primary-bright: #2dd4bf;
+  --color-primary-hover: #5eead4;
+  --color-secondary: #22b8d8;
+  --color-focus: #fbbf24;
+  --color-stations: #fb7a35;
+
+  --color-background: #0b1220;
+  --surface-1: #111a2b;
+  --surface-2: #152036;
+  --surface-3: #1d2a42;
+  --surface-glass: rgba(17, 26, 43, 0.86);
+  --surface-bar: #111a2b;
+  --surface-input: #0e1626;
+  --surface-overlay: rgba(17, 26, 43, 0.94);
+  --surface-card: rgba(17, 26, 43, 0.88);
+  --surface-skeleton-shine: #26354f;
+
+  --color-foreground: #e6ebf3;
+  --color-muted: #1d2a42;
+  --color-muted-foreground: #9aa8bf;
+  --color-border: rgba(226, 232, 240, 0.09);
+  --color-border-strong: rgba(226, 232, 240, 0.17);
+  --color-destructive: #f87171;
+  --color-ring: #2dd4bf;
+  --color-placeholder: #6f7d95;
+  --color-link: #7dd3fc;
+  --color-field-focus: #38bdf8;
+  --field-focus-ring: rgba(56, 189, 248, 0.2);
+  --color-bar: #38a9d6;
+
+  --danger-bg: rgba(248, 113, 113, 0.1);
+  --danger-bg-hover: rgba(248, 113, 113, 0.16);
+  --danger-border: rgba(248, 113, 113, 0.3);
+  --danger-border-strong: rgba(248, 113, 113, 0.45);
+
+  --row-stripe: rgba(226, 232, 240, 0.025);
+  --row-selected: rgba(45, 212, 191, 0.1);
+  --row-selected-hover: rgba(45, 212, 191, 0.16);
+  --row-focused: rgba(251, 191, 36, 0.12);
+  --row-focused-hover: rgba(251, 191, 36, 0.18);
+  --row-pinned-stripe: #141d2e;
+  --row-pinned-selected: #13303a;
+  --row-pinned-focused: #2a2a24;
+
+  --color-panel: #111a2b;
+  --color-panel-2: #152036;
+  --color-panel-foreground: #e6ebf3;
+  --color-panel-muted: #9aa8bf;
+
+  --gradient-panel: linear-gradient(180deg, #131d30 0%, #111a2b 100%);
+  --gradient-hero: linear-gradient(90deg, hsl(195 75% 24%) 1%, #0d1a2c 100%);
+  --color-on-hero: #e8f6fc;
+  --color-on-hero-soft: rgba(232, 246, 252, 0.78);
+  --hero-chip: rgba(255, 255, 255, 0.08);
+  --hero-rail-a: #22b8d8;
+  --hero-rail-b: #38bdf8;
+  --hero-rail-c: #67e8f9;
+  --hero-stop: #0d1a2c;
+  --gradient-wordmark: linear-gradient(90deg, hsl(195 85% 58%) 0%, hsl(190 90% 78%) 100%);
+  --gradient-app:
+    radial-gradient(55% 40% at 8% -6%, rgba(51, 186, 231, 0.12) 0%, transparent 60%),
+    radial-gradient(50% 38% at 98% 2%, rgba(14, 95, 138, 0.16) 0%, transparent 60%),
+    radial-gradient(60% 45% at 55% 112%, rgba(8, 145, 178, 0.1) 0%, transparent 55%),
+    linear-gradient(180deg, #0c1424 0%, #0a101c 100%);
+
+  --glow-primary: 0 8px 24px -8px rgba(34, 184, 216, 0.45);
+
+  --shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 12px 32px -14px rgba(0, 0, 0, 0.6);
+  --shadow-pop:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 24px 48px -18px rgba(0, 0, 0, 0.7);
+
+  --background: #0b1220;
+  --foreground: #e6ebf3;
+  --card: #111a2b;
+  --card-foreground: #e6ebf3;
+  --popover: #111a2b;
+  --popover-foreground: #e6ebf3;
+  --primary: #2dd4bf;
+  --primary-foreground: #04201d;
+  --secondary: #1d2a42;
+  --secondary-foreground: #e6ebf3;
+  --muted: #1d2a42;
+  --muted-foreground: #9aa8bf;
+  --accent: #1d2a42;
+  --accent-foreground: #e6ebf3;
+  --destructive: #f87171;
+  --border: rgba(226, 232, 240, 0.09);
+  --input: rgba(226, 232, 240, 0.16);
+  --ring: #2dd4bf;
+  --sidebar: #111a2b;
+  --sidebar-foreground: #e6ebf3;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #04201d;
+  --sidebar-accent: #1d2a42;
+  --sidebar-accent-foreground: #e6ebf3;
+  --sidebar-border: rgba(226, 232, 240, 0.09);
+  --sidebar-ring: #2dd4bf;
+
+  color-scheme: dark;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -150,6 +292,10 @@ body::before {
 
 ::selection {
   background: rgba(13, 148, 136, 0.22);
+}
+
+[data-theme="dark"] ::selection {
+  background: rgba(45, 212, 191, 0.3);
 }
 
 :focus-visible {

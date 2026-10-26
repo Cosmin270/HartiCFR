@@ -27,7 +27,7 @@
     transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, background var(--dur-fast) ease;
 
     &::placeholder {
-      color: #8792a6;
+      color: var(--color-placeholder);
     }
 
     &::-webkit-search-cancel-button {
@@ -36,9 +36,9 @@
 
     &:focus {
       outline: none;
-      background: #fff;
-      border-color: #1695c0;
-      box-shadow: 0 0 0 4px rgba(22, 149, 192, 0.15);
+      background: var(--surface-input);
+      border-color: var(--color-field-focus);
+      box-shadow: 0 0 0 4px var(--field-focus-ring);
     }
   }
 
@@ -52,7 +52,7 @@
     padding: 0 5px;
     border: 1px solid var(--color-border-strong);
     border-radius: 6px;
-    background: #fff;
+    background: var(--surface-1);
     color: var(--color-muted-foreground);
     font-family: var(--font-body);
     font-size: 0.72rem;
@@ -76,7 +76,7 @@
     padding: 6px;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--rad-sm);
-    background: #fff;
+    background: var(--surface-1);
     box-shadow: var(--shadow-pop);
     animation: fade-up var(--dur-fast) var(--ease-out) both;
   }
@@ -163,7 +163,12 @@
 @media (max-width: 640px) {
   .global-search__input {
     height: 40px;
+    padding: 0 10px 0 32px; /* no "/" hint to make room for on phones */
     font-size: 16px; /* below 16px iOS zooms the page on focus */
+  }
+
+  .global-search__icon {
+    left: 11px;
   }
 
   .global-search__kbd {

@@ -166,6 +166,18 @@ aplicație.
         calculează stația cea mai apropiată și distanța până la ea.
   \item \textbf{Export CSV}: rândurile afișate în tabel pot fi descărcate
         într-un fișier care se deschide direct în Excel.
+  \item \textbf{Sortare}: un clic pe antetul unei coloane ordonează tabelul
+        crescător sau descrescător.
+  \item \textbf{Fundaluri de hartă}: hartă stradală, imagini din satelit sau
+        relief, plus stratul \ui{Căi ferate} cu liniile de cale ferată; harta
+        poate fi deschisă pe tot ecranul.
+  \item \textbf{Starea se păstrează}: tab-ul, filtrele, sortarea, selecțiile și
+        ce este afișat pe hartă rămân la fel după reîncărcarea paginii.
+  \item \textbf{Anulare}: ștergerea unei selecții sau a unui strat de pe hartă
+        poate fi anulată din notificarea care apare în colțul ecranului.
+  \item \textbf{Temă întunecată}: aplicația urmează setarea sistemului de
+        operare, iar butonul cu soare/lună comută manual între tema luminoasă
+        și cea întunecată.
   \item \textbf{Funcționează și pe telefon}: interfața se adaptează ecranelor
         mici, iar harta apare sub tabel.
 \end{itemize}
@@ -301,10 +313,10 @@ HartiCFR/
 |-- HartiCFR_FE/                 Frontend (React + Vite)
 |   |-- src/
 |   |   |-- App.tsx              Rutele paginilor
-|   |   |-- pages/               Pagina de start, Login, Creare cont, Dashboard
+|   |   |-- pages/               Pagina de start, Login, Creare cont, Dashboard, 404
 |   |   |-- components/          DataPanel (tabele), GeoMap (hartă),
 |   |   |                        StatsPanel (statistici), GlobalSearch, ...
-|   |   |-- lib/                 Cereri API, distanțe, export CSV, categorii
+|   |   |-- lib/                 Cereri API, distanțe, CSV, categorii, temă
 |   |   `-- types/               Structurile TypeScript pentru Log și Station
 |   |-- public/                  Logo și iconițe
 |   |-- .env.example             Descrie variabilele de mediu
@@ -377,8 +389,8 @@ Dashboard-ul are trei zone:
 
 \begin{itemize}
   \item \textbf{Bara de sus}, cu trei tab-uri -- \ui{Treceri la nivel},
-        \ui{Stații} și \ui{Statistici} --, caseta de căutare și butonul
-        \ui{Deconectare}.
+        \ui{Stații} și \ui{Statistici} --, caseta de căutare, butonul pentru
+        temă (soare/lună) și butonul \ui{Deconectare}.
   \item \textbf{Tabelul} pentru tab-ul selectat, cu un filtru sub antetul
         fiecărei coloane.
   \item \textbf{Harta}, în dreapta pe ecranele mari și sub tabel pe telefoane
@@ -392,6 +404,24 @@ tab-uri (\textbf{Selectate}), și câte sunt afișate în acest moment pe hartă
 
 Dacă datele nu pot fi încărcate, deasupra tabelului apare un mesaj de eroare
 cu butonul \ui{Reîncearcă}.
+
+\paragraph{Starea dashboard-ului.} Aplicația ține minte, în browser, tab-ul
+deschis, filtrele, sortarea, rândurile selectate, ce este afișat pe hartă,
+fundalul hărții și colorarea trecerilor. După o reîncărcare a paginii sau la
+următoarea vizită de pe același calculator, dashboard-ul arată exact ca
+înainte. \ui{Deconectare} șterge aceste informații.
+
+\paragraph{Tema întunecată.} La prima vizită, aplicația folosește tema
+sistemului de operare (luminoasă sau întunecată). Butonul cu soare/lună din
+bara de sus -- sau din colțul paginii de start -- comută între cele două teme,
+iar alegerea este reținută. În tema întunecată și harta stradală trece pe un
+fundal închis la culoare.
+
+\paragraph{Notificări.} Rezultatul unor acțiuni apare pentru câteva secunde
+într-o notificare în colțul din dreapta jos: confirmarea unui export CSV,
+avertismentul că unele înregistrări selectate nu au coordonate sau
+posibilitatea de a anula o ștergere (butonul \ui{Anulează}). Notificarea
+rămâne pe ecran cât timp ții mouse-ul deasupra ei.
 
 \subsection{Căutarea}
 
@@ -433,6 +463,13 @@ filtrele active. Cât timp există filtre active, titlul tabelului arată
 „\emph{N din M rânduri}”, iar butonul \ui{Șterge filtrele}
 le resetează pe toate.
 
+\paragraph{Sortarea.} Apasă pe numele unei coloane din antet ca să ordonezi
+tabelul crescător; al doilea clic îl ordonează descrescător, iar al treilea
+revine la ordinea inițială. Săgeata de lângă numele coloanei arată sensul
+sortării. Numerele sunt comparate ca numere (2 înaintea lui 10), textul după
+regulile limbii române, iar celulele goale rămân întotdeauna la sfârșit.
+Sortarea se aplică și exportului CSV.
+
 Tabelul afișează la început primele 100 de rânduri și le adaugă pe
 următoarele pe măsură ce derulezi în jos, astfel încât pagina rămâne rapidă
 chiar și cu peste 2\,000 de stații.
@@ -459,9 +496,13 @@ cu tot cu diacritice.
         hartă. Pe telefon, pagina coboară automat până la hartă.
 \end{enumerate}
 
-\ui{Deselectează tot} debifează toate rândurile din tab-ul curent. Nu șterge
-punctele deja afișate pe hartă -- harta se schimbă doar când apeși din nou
-\ui{Afișează pe hartă}.
+\ui{Deselectează tot} debifează toate rândurile din tab-ul curent; o
+notificare îți permite să anulezi acțiunea. Nu șterge punctele deja afișate
+pe hartă -- harta se schimbă doar când apeși din nou \ui{Afișează pe hartă}.
+
+Dacă printre rândurile selectate există înregistrări fără coordonate, după
+\ui{Afișează pe hartă} apare o notificare care spune câte nu pot fi
+poziționate.
 
 \subsection{Citirea hărții}
 
@@ -485,8 +526,18 @@ punctele deja afișate pe hartă -- harta se schimbă doar când apeși din nou
   \item Etichetele \ui{Treceri} și \ui{Stații} de deasupra hărții arată câte
         puncte de fiecare tip sunt afișate. Apasă pe o etichetă ca să ascunzi
         sau să reafișezi stratul respectiv; apasă pe \ui{$\times$} ca să-l
-        elimini de pe hartă.
+        elimini de pe hartă (eliminarea se poate anula din notificare).
 \end{itemize}
+
+\paragraph{Fundalul hărții.} Butoanele din colțul hărții schimbă fundalul:
+\ui{Hartă} (harta stradală CARTO), \ui{Satelit} (imagini Esri) sau
+\ui{Relief} (OpenTopoMap, cu curbe de nivel). Butonul \ui{Căi ferate}
+suprapune peste oricare fundal liniile de cale ferată din proiectul
+OpenRailwayMap, util pentru a vedea pe ce linie se află o trecere. Sursele
+fiecărui strat sunt menționate în colțul din dreapta jos al hărții.
+
+\paragraph{Ecran complet.} Butonul cu patru colțuri deschide harta pe tot
+ecranul; același buton sau tasta \kbd{Esc} o readuce la locul ei.
 
 \paragraph{Cea mai apropiată stație.} Fereastra cu detaliile unei treceri
 arată și stația cea mai apropiată, împreună cu distanța în linie dreaptă
@@ -528,8 +579,8 @@ Orice bară sau categorie se poate apăsa: aplicația deschide tab-ul
 un clic pe „Aerofina” afișează doar trecerile acestui producător, care pot fi
 apoi selectate și afișate pe hartă.
 
-Înregistrările fără coordonate valide (lipsă sau 0,0) nu apar pe hartă, fără
-niciun mesaj; ele rămân însă vizibile în tabele.
+Înregistrările fără coordonate valide (lipsă sau 0,0) nu apar pe hartă; o
+notificare spune câte au fost omise, iar ele rămân vizibile în tabele.
 
 \section{Datele}
 \label{sec:datamodel}
@@ -705,7 +756,8 @@ Migrarea va fi aplicată automat la următoarea pornire a backend-ului.
 \begin{description}[style=nextline,leftmargin=1.2cm]
   \item[\file{src/App.tsx}] Definește paginile: \code{/} (pagina de start),
     \code{/login}, \code{/signin} (creare cont) și \code{/dashboard}.
-    Dashboard-ul este protejat de \code{ProtectedRoute}.
+    Dashboard-ul este protejat de \code{ProtectedRoute}. Orice altă adresă
+    afișează pagina \emph{Pagina nu există} (\file{pages/NotFoundPage.tsx}).
   \item[\file{components/ServerStatus.tsx}] Interoghează \code{/api/health}
     la pornirea aplicației, cu reîncercări la fiecare 3 secunde, și
     expune starea serverului (\emph{checking}, \emph{waking}, \emph{ready},
@@ -744,6 +796,16 @@ Migrarea va fi aplicată automat la următoarea pornire a backend-ului.
     de date (de exemplu \code{\_} devine „Necunoscut”) și culorile
     categoriilor, comune hărții și statisticilor.
   \item[\file{lib/csv.ts}] Construirea și descărcarea fișierelor CSV.
+  \item[\file{components/Toast.tsx}] Notificările din colțul ecranului
+    (\code{useToast}), cu buton opțional de acțiune, folosit pentru
+    \ui{Anulează}.
+  \item[\file{lib/storage.ts}] Salvează starea dashboard-ului în
+    \code{localStorage}. Dacă browserul blochează stocarea, aplicația
+    funcționează la fel, doar fără să rețină starea.
+  \item[\file{lib/theme.ts}] Tema luminoasă sau întunecată. Culorile sunt
+    definite ca variabile CSS în \file{index.css}, cu un set separat pentru
+    \code{data-theme="dark"}; un mic script din \file{index.html} alege tema
+    înainte de prima afișare, ca pagina să nu clipească în alb.
   \item[\file{lib/api.ts}] Construiește adresa completă pentru fiecare cerere
     API. Toate cererile trimit
     \code{credentials: "include"}, astfel încât cookie-ul de sesiune să
@@ -823,7 +885,14 @@ Contul meu nu mai există &
   pornirea serverului. \\[4pt]
 O înregistrare selectată nu apare pe hartă &
   Nu are coordonate (sau are 0,0) în baza de date, deci nu poate fi
-  poziționată. \\
+  poziționată; notificarea de după \ui{Afișează pe hartă} spune câte
+  astfel de înregistrări au fost omise. \\[4pt]
+Dashboard-ul se deschide cu filtre sau selecții vechi &
+  Aplicația reține starea de la ultima vizită. Apasă \ui{Șterge filtrele}
+  sau \ui{Deconectare}, care șterge starea salvată. \\[4pt]
+Stratul \ui{Căi ferate} sau fundalul \ui{Relief} nu se încarcă &
+  Imaginile vin de la servicii externe gratuite (OpenRailwayMap,
+  OpenTopoMap), care pot fi temporar lente; încearcă din nou mai târziu. \\
 \bottomrule
 \end{longtable}
 
