@@ -1,6 +1,10 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { downloadCsv, toCsv, todayStamp } from "@/lib/csv";
+import { fold } from "@/lib/text";
 
 export type ColumnFilter = "text" | "select";
+
+export type Filters = Record<string, string>;
 
 // Rows are mounted in pages as the user scrolls. Mounting all ~2,300 at once
 // made every tab switch, "select all" and filter change lay out the full
@@ -35,7 +39,7 @@ function TableRowInner<T extends { id: number }>({
         .filter(Boolean)
         .join(" ");
     return (
-        <tr className={rowClass || undefined} onClick={() => onToggle(row.id)}>
+        <tr className={rowClass || undefined} data-id={row.id} onClick={() => onToggle(row.id)}>
             <td className="check">
                 <input
                     type="checkbox"
@@ -57,11 +61,17 @@ const TableRow = memo(TableRowInner) as typeof TableRowInner;
 
 interface DataPanelProps<T extends { id: number }> {
     title: string;
+    // Base name for the exported CSV file, without date or extension.
+    exportName: string;
     columns: ColumnDef<T>[];
     rows: T[];
     loading: boolean;
     emptyText: string;
     selected: Set<number>;
+    // Filters live in the parent so other views (statistics, search) can
+    // open the table already filtered.
+    filters: Filters;
+    onFiltersChange: (filters: Filters) => void;
     focusedId?: number | null;
     onToggleRow: (id: number) => void;
     onSelectMany: (ids: number[], select: boolean) => void;
@@ -73,11 +83,14 @@ interface DataPanelProps<T extends { id: number }> {
 
 export default function DataPanel<T extends { id: number }>({
     title,
+    exportName,
     columns,
     rows,
     loading,
     emptyText,
     selected,
+    filters,
+    onFiltersChange,
     focusedId = null,
     onToggleRow,
     onSelectMany,
@@ -87,10 +100,10 @@ export default function DataPanel<T extends { id: number }>({
     hidden = false,
 }: DataPanelProps<T>) {
     const plotCount = renderCount ?? selected.size;
-    const [filters, setFilters] = useState<Record<string, string>>({});
     const [limit, setLimit] = useState(PAGE_SIZE);
     const wrapRef = useRef<HTMLDivElement>(null);
     const moreRef = useRef<HTMLTableRowElement>(null);
+    const pendingFocusRef = useRef<number | null>(null);
 
     const selectOptions = useMemo(() => {
         const map: Record<string, string[]> = {};
@@ -115,7 +128,7 @@ export default function DataPanel<T extends { id: number }>({
                 const val = raw === undefined || raw === null ? "" : String(raw);
                 return col.filter === "select"
                     ? val === q
-                    : val.toLowerCase().includes(q.toLowerCase());
+                    : fold(val).includes(fold(q));
             })
         );
     }, [rows, columns, filters]);
@@ -146,15 +159,52 @@ export default function DataPanel<T extends { id: number }>({
         return () => observer.disconnect();
     }, [hasMore, hidden, limit]);
 
-    function setFilter(key: string, value: string) {
-        setFilters((prev) => ({ ...prev, [key]: value }));
+    // A new filter set starts again from the first page.
+    useEffect(() => {
         setLimit(PAGE_SIZE);
         wrapRef.current?.scrollTo({ top: 0 });
+    }, [filters]);
+
+    // Bring a newly focused row (picked on the map or in search) into view,
+    // mounting more pages first if it sits further down. The pending ref makes
+    // this happen once per focus change, not again every time the user
+    // scrolls and the window grows.
+    useEffect(() => {
+        pendingFocusRef.current = focusedId;
+    }, [focusedId]);
+
+    useEffect(() => {
+        const id = pendingFocusRef.current;
+        if (id === null || hidden) return;
+        const index = filtered.findIndex((r) => r.id === id);
+        if (index < 0) {
+            pendingFocusRef.current = null;
+            return;
+        }
+        if (index >= limit) {
+            setLimit(Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE);
+            return;
+        }
+        pendingFocusRef.current = null;
+        wrapRef.current
+            ?.querySelector(`tr[data-id="${id}"]`)
+            ?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, [focusedId, hidden, filtered, limit]);
+
+    function setFilter(key: string, value: string) {
+        onFiltersChange({ ...filters, [key]: value });
     }
 
     function clearFilters() {
-        setFilters({});
-        setLimit(PAGE_SIZE);
+        onFiltersChange({});
+    }
+
+    function exportCsv() {
+        const csv = toCsv(
+            columns.map((c) => c.label),
+            filtered.map((row) => columns.map((c) => c.get(row)))
+        );
+        downloadCsv(`${exportName}-${todayStamp()}.csv`, csv);
     }
 
     return (
@@ -181,6 +231,18 @@ export default function DataPanel<T extends { id: number }>({
                             Deselectează tot
                         </button>
                     )}
+                    <button
+                        type="button"
+                        className="btn-clear btn-clear--icon"
+                        onClick={exportCsv}
+                        disabled={loading || filtered.length === 0}
+                        title={`Exportă cele ${filtered.length} rânduri afișate în format CSV`}
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+                        </svg>
+                        CSV
+                    </button>
                     <button
                         type="button"
                         className="btn-render"

@@ -50,7 +50,19 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 20px;
     align-items: start;
+
+    &.is-hidden {
+      display: none;
+    }
   }
+}
+
+.stat-row.is-hidden {
+  display: none;
+}
+
+.appbar__tab-short {
+  display: none;
 }
 
 @media (max-width: 1024px) {
@@ -89,10 +101,23 @@
     opacity: 0.8;
   }
 
+  // Brand and the end group share the leftover width equally, which keeps
+  // the tabs centred in the bar.
   &__brand {
+    flex: 1 1 0;
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: max-content;
+  }
+
+  &__end {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
   }
 
   &__logo {
@@ -870,6 +895,10 @@
 }
 
 .btn-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 36px;
   padding: 0 14px;
   border: 1px solid var(--color-border-strong);
@@ -903,6 +932,66 @@
   50% { transform: translateY(-7px); }
 }
 
+.btn-clear--icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Colour-by control in the map panel header */
+.color-by {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  select {
+    min-height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 1100px) {
+  .appbar__logout-label {
+    display: none;
+  }
+
+  .appbar__logout {
+    padding: 0 10px;
+  }
+}
+
+/* Tablet: search and logout drop to a second row of the bar. */
+@media (max-width: 860px) and (min-width: 641px) {
+  .appbar {
+    height: auto;
+    min-height: 58px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    row-gap: 8px;
+  }
+
+  .appbar__end {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
 /* ── Phone layout ───────────────────────────────────────────
    The dashboard is a two-pane desktop tool: a wide table beside a
    map. On a phone neither can have the space it wants, so the panes
@@ -926,6 +1015,10 @@
     gap: 10px;
   }
 
+  .appbar__brand {
+    flex: none;
+  }
+
   .appbar__tabs {
     order: 3;
     width: 100%;
@@ -938,6 +1031,21 @@
     min-height: 40px;
     padding: 0 10px;
     font-size: 0.8rem;
+  }
+
+  // The full "Treceri la nivel" wraps at phone width; the screen reader
+  // keeps the full label, sighted users get the short one.
+  .appbar__tab-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .appbar__tab-short {
+    display: inline;
   }
 
   .appbar__logout {

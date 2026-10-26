@@ -2,23 +2,31 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Log } from "../types/log";
 import type { Station } from "../types/station";
-import DataPanel, { type ColumnDef } from "../components/DataPanel";
+import DataPanel, { type ColumnDef, type Filters } from "../components/DataPanel";
 import GeoMap, { type MapFocus, type MapLayer } from "../components/GeoMap";
+import GlobalSearch from "../components/GlobalSearch";
+import StatsPanel from "../components/StatsPanel";
 import "./DashboardPage.scss";
 import { apiUrl } from "@/lib/api";
+import {
+    CROSSING_ATTRIBUTES,
+    locationTypeLabel,
+    producerLabel,
+    type CrossingAttribute,
+} from "@/lib/categories";
 
 const LOG_COLUMNS: ColumnDef<Log>[] = [
     { key: "id", label: "ID", filter: "text", num: true, get: (l) => l.id },
-    { key: "srcf", label: "SRCF", filter: "text", get: (l) => l.srcf },
+    { key: "srcf", label: "SRCF", filter: "select", get: (l) => l.srcf },
     { key: "ct", label: "Secția CT", filter: "text", get: (l) => l.ct },
     { key: "tnPosition", label: "Km TN", filter: "text", num: true, get: (l) => l.tnPosition },
-    { key: "locationType", label: "Tip", filter: "select", get: (l) => l.locationType },
+    { key: "locationType", label: "Tip", filter: "select", get: (l) => locationTypeLabel(l.locationType) },
     { key: "start", label: "De la", filter: "text", get: (l) => l.location?.start },
     { key: "end", label: "Până la", filter: "text", get: (l) => l.location?.end },
-    { key: "mainLine", label: "Magistrală", filter: "text", get: (l) => l.mainLine },
+    { key: "mainLine", label: "Magistrală", filter: "select", get: (l) => l.mainLine },
     { key: "electricType", label: "Instalație", filter: "select", get: (l) => l.electricType },
     { key: "configType", label: "Config", filter: "select", get: (l) => l.configType },
-    { key: "producer", label: "Producător", filter: "select", get: (l) => l.producer },
+    { key: "producer", label: "Producător", filter: "select", get: (l) => producerLabel(l.producer) },
     { key: "operatingMode", label: "Regim", filter: "select", get: (l) => l.operatingMode },
     { key: "x", label: "Longitudine", filter: "text", num: true, get: (l) => l.position?.x },
     { key: "y", label: "Latitudine", filter: "text", num: true, get: (l) => l.position?.y },
@@ -32,10 +40,38 @@ const STATION_COLUMNS: ColumnDef<Station>[] = [
     { key: "y", label: "Latitudine", filter: "text", num: true, get: (s) => s.position?.y },
 ];
 
-const TABS: { key: MapLayer; label: string }[] = [
-    { key: "crossings", label: "Treceri la nivel" },
-    { key: "stations", label: "Stații" },
+type Tab = MapLayer | "stats";
+
+const TABS: { key: Tab; label: string; short: string; title: string; icon: React.ReactNode }[] = [
+    {
+        key: "crossings",
+        label: "Treceri la nivel",
+        short: "Treceri",
+        title: "Treceri la nivel",
+        icon: <path d="M7 3v18M17 3v18M7 8h10M7 16h10" />,
+    },
+    {
+        key: "stations",
+        label: "Stații",
+        short: "Stații",
+        title: "Stații",
+        icon: (
+            <>
+                <path d="M4 21V9l8-6 8 6v12" />
+                <path d="M9 21v-6h6v6" />
+            </>
+        ),
+    },
+    {
+        key: "stats",
+        label: "Statistici",
+        short: "Statistici",
+        title: "Statistici",
+        icon: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
+    },
 ];
+
+const NO_FILTERS: Filters = {};
 
 // Shared empty lists for hidden map layers, so hiding a layer does not hand
 // the memoized map a new array on every render.
@@ -57,7 +93,7 @@ function setManyInSet(prev: Set<number>, ids: number[], select: boolean): Set<nu
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const [tab, setTab] = useState<MapLayer>("crossings");
+    const [tab, setTab] = useState<Tab>("crossings");
 
     const [logs, setLogs] = useState<Log[]>([]);
     const [stations, setStations] = useState<Station[]>([]);
@@ -72,6 +108,9 @@ export default function DashboardPage() {
     const [showCrossings, setShowCrossings] = useState(true);
     const [showStations, setShowStations] = useState(true);
     const [focus, setFocus] = useState<MapFocus>(null);
+    const [logFilters, setLogFilters] = useState<Filters>(NO_FILTERS);
+    const [stationFilters, setStationFilters] = useState<Filters>(NO_FILTERS);
+    const [colorBy, setColorBy] = useState<CrossingAttribute | null>(null);
     const mapPanelRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -155,6 +194,45 @@ export default function DashboardPage() {
         }
     }
 
+    // A search result goes straight onto the map: selected, plotted and
+    // highlighted, with its table open on the matching row. Table filters
+    // are cleared so they cannot hide the row that was asked for.
+    const showOnMap = useCallback(
+        (layer: MapLayer, id: number) => {
+            if (layer === "crossings") {
+                const log = logs.find((l) => l.id === id);
+                if (!log) return;
+                setSelectedLogs((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+                setRenderedLogs((prev) => (prev.some((l) => l.id === id) ? prev : [...prev, log]));
+                setShowCrossings(true);
+                setLogFilters(NO_FILTERS);
+            } else {
+                const station = stations.find((s) => s.id === id);
+                if (!station) return;
+                setSelectedStations((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+                setRenderedStations((prev) => (prev.some((s) => s.id === id) ? prev : [...prev, station]));
+                setShowStations(true);
+                setStationFilters(NO_FILTERS);
+            }
+            setTab(layer);
+            setFocus({ layer, id });
+        },
+        [logs, stations]
+    );
+
+    // Clicking a point on the map opens its table and highlights its row.
+    const pickOnMap = useCallback((layer: MapLayer, id: number) => {
+        setTab(layer);
+        setFocus({ layer, id });
+    }, []);
+
+    // From the statistics tab: open the crossings table filtered to one value.
+    const openFiltered = useCallback((column: string, value: string) => {
+        setLogFilters({ [column]: value });
+        setTab("crossings");
+        window.scrollTo({ top: 0 });
+    }, []);
+
     function clearLayer(layer: MapLayer) {
         if (layer === "crossings") setRenderedLogs([]);
         else setRenderedStations([]);
@@ -176,7 +254,7 @@ export default function DashboardPage() {
     const visibleCrossings = showCrossings ? renderedLogs : NO_LOGS;
     const visibleStations = showStations ? renderedStations : NO_STATIONS;
     const plottedCount = renderedLogs.length + renderedStations.length;
-    const activeRecords = tab === "crossings" ? logs.length : stations.length;
+    const activeRecords = tab === "stations" ? stations.length : logs.length;
     const activeSelected = tab === "crossings" ? selectedLogs.size : selectedStations.size;
     const totalSelected = selectedLogs.size + selectedStations.size;
 
@@ -198,36 +276,40 @@ export default function DashboardPage() {
                             className={`appbar__tab${tab === t.key ? " is-active" : ""}`}
                             onClick={() => setTab(t.key)}
                         >
-                            {t.key === "crossings" ? (
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                    <path d="M7 3v18M17 3v18M7 8h10M7 16h10" />
-                                </svg>
-                            ) : (
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                    <path d="M4 21V9l8-6 8 6v12" />
-                                    <path d="M9 21v-6h6v6" />
-                                </svg>
-                            )}
-                            {t.label}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                {t.icon}
+                            </svg>
+                            <span className="appbar__tab-label">{t.label}</span>
+                            <span className="appbar__tab-short" aria-hidden="true">{t.short}</span>
                         </button>
                     ))}
                 </nav>
 
-                <button type="button" className="appbar__logout" onClick={handleLogout}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                        <path d="m16 17 5-5-5-5M21 12H9" />
-                    </svg>
-                    Deconectare
-                </button>
+                <div className="appbar__end">
+                    <GlobalSearch logs={logs} stations={stations} onPick={showOnMap} />
+
+                    <button
+                        type="button"
+                        className="appbar__logout"
+                        onClick={handleLogout}
+                        aria-label="Deconectare"
+                        title="Deconectare"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <path d="m16 17 5-5-5-5M21 12H9" />
+                        </svg>
+                        <span className="appbar__logout-label">Deconectare</span>
+                    </button>
+                </div>
             </header>
 
             <main className="dashboard__body">
                 <div className="dashboard__head">
                     <h1 className="dashboard__title">
-                        {tab === "crossings" ? "Treceri la nivel" : "Stații"}
+                        {TABS.find((t) => t.key === tab)?.title}
                     </h1>
-                    <div className="stat-row">
+                    <div className={`stat-row${tab === "stats" ? " is-hidden" : ""}`}>
                         <div className="stat">
                             <span className="stat__value">{loading ? "—" : activeRecords}</span>
                             <span className="stat__label">Înregistrări</span>
@@ -258,16 +340,25 @@ export default function DashboardPage() {
                     </div>
                 )}
 
+                {!error && tab === "stats" && (
+                    <StatsPanel logs={logs} stations={stations} loading={loading} onFilter={openFiltered} />
+                )}
+
+                {/* Kept mounted on the statistics tab so selections, filters
+                    and the map survive the round trip. */}
                 {!error && (
-                    <div className="dashboard__grid">
+                    <div className={`dashboard__grid${tab === "stats" ? " is-hidden" : ""}`}>
                         <div className="dashboard__tables">
                             <DataPanel
                                 title="Treceri la nivel"
+                                exportName="treceri-la-nivel"
                                 columns={LOG_COLUMNS}
                                 rows={logs}
                                 loading={loading}
                                 emptyText="Nu există treceri la nivel."
                                 selected={selectedLogs}
+                                filters={logFilters}
+                                onFiltersChange={setLogFilters}
                                 focusedId={focus?.layer === "crossings" ? focus.id : null}
                                 onToggleRow={toggleLogRow}
                                 onSelectMany={(ids, select) =>
@@ -280,11 +371,14 @@ export default function DashboardPage() {
                             />
                             <DataPanel
                                 title="Stații"
+                                exportName="statii"
                                 columns={STATION_COLUMNS}
                                 rows={stations}
                                 loading={loading}
                                 emptyText="Nu există stații."
                                 selected={selectedStations}
+                                filters={stationFilters}
+                                onFiltersChange={setStationFilters}
                                 focusedId={focus?.layer === "stations" ? focus.id : null}
                                 onToggleRow={toggleStationRow}
                                 onSelectMany={(ids, select) =>
@@ -305,6 +399,22 @@ export default function DashboardPage() {
                                         {plottedCount > 0 ? `${plottedCount} pe hartă` : "goală"}
                                     </span>
                                 </h2>
+                                <label className="color-by">
+                                    <span>Culoare treceri</span>
+                                    <select
+                                        value={colorBy ?? ""}
+                                        onChange={(e) =>
+                                            setColorBy((e.target.value || null) as CrossingAttribute | null)
+                                        }
+                                    >
+                                        <option value="">Uniformă</option>
+                                        {CROSSING_ATTRIBUTES.map((a) => (
+                                            <option key={a.key} value={a.key}>
+                                                După {a.label.toLowerCase()}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
                                 <div className="layer-legend" aria-label="Straturi hartă">
                                     <div className="layer-chip layer-chip--crossings">
                                         <button
@@ -375,7 +485,10 @@ export default function DashboardPage() {
                                         <GeoMap
                                             crossings={visibleCrossings}
                                             stations={visibleStations}
+                                            allStations={stations}
+                                            colorBy={colorBy}
                                             focus={focus}
+                                            onPick={pickOnMap}
                                         />
                                     </div>
                                 )}

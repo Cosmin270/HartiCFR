@@ -1,0 +1,308 @@
+// Single-series bars use one hue; the categorical hues are kept for the
+// share bars, where colour carries identity.
+$bar-color: #1695c0;
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: fade-up var(--dur-slow) var(--ease-out) both;
+
+  &--loading {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 320px;
+    color: var(--color-muted-foreground);
+    font-family: var(--font-head);
+    font-weight: 600;
+  }
+
+  &__kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  &__hint {
+    color: var(--color-muted-foreground);
+    font-size: 0.85rem;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
+  }
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--rad-md);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-card);
+
+  &__label {
+    color: var(--color-muted-foreground);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  &__value {
+    font-family: var(--font-head);
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--color-foreground);
+  }
+
+  &__note {
+    color: var(--color-muted-foreground);
+    font-size: 0.78rem;
+  }
+}
+
+.stats-card {
+  padding: 18px 20px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--rad-md);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-card);
+
+  &__head {
+    margin-bottom: 14px;
+  }
+
+  &__title {
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 650;
+    color: var(--color-foreground);
+  }
+
+  &__subtitle {
+    margin-top: 2px;
+    color: var(--color-muted-foreground);
+    font-size: 0.8rem;
+  }
+
+  &__shares {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+}
+
+.bar-chart {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  &__row {
+    display: grid;
+    grid-template-columns: minmax(90px, 30%) 1fr;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 5px 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--dur-fast) ease;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--surface-3);
+
+      .bar-chart__bar {
+        filter: brightness(1.12);
+      }
+
+      .bar-chart__share {
+        opacity: 1;
+      }
+    }
+  }
+
+  &__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-foreground);
+    font-size: 0.84rem;
+  }
+
+  &__track {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__bar {
+    flex: none;
+    height: 14px;
+    min-width: 2px;
+    // Square at the baseline, rounded at the data end.
+    border-radius: 0 4px 4px 0;
+    background: $bar-color;
+    transition: filter var(--dur-fast) ease;
+  }
+
+  &__value {
+    flex: none;
+    color: var(--color-foreground);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  &__share {
+    color: var(--color-muted-foreground);
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity var(--dur-fast) ease;
+  }
+}
+
+.share {
+  &__title {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--color-foreground);
+    font-size: 0.84rem;
+    font-weight: 600;
+  }
+
+  &__bar {
+    display: flex;
+    gap: 2px;
+    height: 22px;
+  }
+
+  &__segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3px;
+    flex-basis: 0;
+    border: none;
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: filter var(--dur-fast) ease;
+
+    &:first-child {
+      border-radius: 4px 0 0 4px;
+    }
+
+    &:last-child {
+      border-radius: 0 4px 4px 0;
+    }
+
+    &:only-child {
+      border-radius: 4px;
+    }
+
+    &:hover,
+    &:focus-visible {
+      filter: brightness(1.1);
+    }
+  }
+
+  &__legend {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+    margin-top: 6px;
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 4px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--color-foreground);
+      font: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--surface-3);
+      }
+    }
+  }
+
+  &__swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+
+  &__count {
+    color: var(--color-muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (max-width: 1024px) {
+  .stats__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats {
+    gap: 14px;
+  }
+
+  .stats__kpis {
+    gap: 8px;
+  }
+
+  .kpi {
+    padding: 12px 14px;
+  }
+
+  .kpi__value {
+    font-size: 1.5rem;
+  }
+
+  .stats-card {
+    padding: 14px;
+  }
+
+  // No hover on touch: show the share next to the count all the time.
+  .bar-chart__share {
+    opacity: 1;
+  }
+
+  .bar-chart__row {
+    min-height: 40px;
+  }
+}
+
+@media (hover: none) {
+  .bar-chart__share {
+    opacity: 1;
+  }
+}
