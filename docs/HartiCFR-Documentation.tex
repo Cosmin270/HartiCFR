@@ -53,7 +53,8 @@
 
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\file}[1]{\texttt{#1}}
-\newcommand{\ui}[1]{\textsf{\textbf{#1}}}  
+\newcommand{\ui}[1]{\textsf{\textbf{#1}}}
+\newcommand{\kbd}[1]{\fbox{\footnotesize\texttt{#1}}}  
 
 \setlist{itemsep=2pt,topsep=4pt}
 \setlength{\parskip}{4pt}
@@ -150,8 +151,21 @@ aplicație.
         punctelor apropiate și detalii complete la trecerea mouse-ului.
   \item \textbf{Straturi}: trecerile și stațiile pot fi ascunse, reafișate
         sau eliminate separat de pe hartă.
-  \item \textbf{Legătură tabel--hartă}: selectarea unui rând deja afișat mută
-        harta la punctul respectiv și îl evidențiază.
+  \item \textbf{Legătură tabel--hartă în ambele sensuri}: selectarea unui
+        rând deja afișat mută harta la punctul respectiv, iar un clic pe un
+        punct de pe hartă deschide tabelul la rândul lui.
+  \item \textbf{Căutare globală}: o casetă de căutare cu sugestii găsește
+        stații (după nume sau cod) și treceri (după stații, SRCF, secție sau
+        număr) și le afișează direct pe hartă.
+  \item \textbf{Statistici}: un tab separat cu indicatori și grafice pe
+        sucursale, producători, magistrale și tipuri de instalații; un clic pe
+        o bară deschide tabelul deja filtrat.
+  \item \textbf{Colorarea hărții}: trecerile pot fi colorate după instalație,
+        configurație, regim, tip sau producător, cu legendă.
+  \item \textbf{Cea mai apropiată stație}: pentru fiecare trecere, aplicația
+        calculează stația cea mai apropiată și distanța până la ea.
+  \item \textbf{Export CSV}: rândurile afișate în tabel pot fi descărcate
+        într-un fișier care se deschide direct în Excel.
   \item \textbf{Funcționează și pe telefon}: interfața se adaptează ecranelor
         mici, iar harta apare sub tabel.
 \end{itemize}
@@ -210,6 +224,8 @@ apar în tabel, dar nu pot fi afișate pe hartă.
   \item Le selectezi (una câte una sau toate deodată) și apeși \ui{Afișează pe hartă}.
   \item Explorezi harta: apropii, depărtezi și ții mouse-ul deasupra
         punctelor pentru detalii.
+  \item Pentru o privire de ansamblu, deschizi tab-ul \ui{Statistici}; pentru
+        un loc anume, îl cauți în caseta de căutare din bara de sus.
 \end{enumerate}
 
 Fiecare pas este descris pe larg în secțiunea~\ref{sec:usage}.
@@ -286,8 +302,9 @@ HartiCFR/
 |   |-- src/
 |   |   |-- App.tsx              Rutele paginilor
 |   |   |-- pages/               Pagina de start, Login, Creare cont, Dashboard
-|   |   |-- components/          DataPanel (tabele), GeoMap (hartă), ...
-|   |   |-- lib/api.ts           Adresa backend-ului pentru cereri
+|   |   |-- components/          DataPanel (tabele), GeoMap (hartă),
+|   |   |                        StatsPanel (statistici), GlobalSearch, ...
+|   |   |-- lib/                 Cereri API, distanțe, export CSV, categorii
 |   |   `-- types/               Structurile TypeScript pentru Log și Station
 |   |-- public/                  Logo și iconițe
 |   |-- .env.example             Descrie variabilele de mediu
@@ -359,8 +376,9 @@ autentificare.
 Dashboard-ul are trei zone:
 
 \begin{itemize}
-  \item \textbf{Bara de sus}, cu două tab-uri -- \ui{Treceri la nivel} și
-        \ui{Stații} -- și butonul \ui{Deconectare}.
+  \item \textbf{Bara de sus}, cu trei tab-uri -- \ui{Treceri la nivel},
+        \ui{Stații} și \ui{Statistici} --, caseta de căutare și butonul
+        \ui{Deconectare}.
   \item \textbf{Tabelul} pentru tab-ul selectat, cu un filtru sub antetul
         fiecărei coloane.
   \item \textbf{Harta}, în dreapta pe ecranele mari și sub tabel pe telefoane
@@ -375,6 +393,26 @@ tab-uri (\textbf{Selectate}), și câte sunt afișate în acest moment pe hartă
 Dacă datele nu pot fi încărcate, deasupra tabelului apare un mesaj de eroare
 cu butonul \ui{Reîncearcă}.
 
+\subsection{Căutarea}
+
+Caseta \emph{Caută o stație sau o trecere\dots} din bara de sus caută în
+toate datele, indiferent de tab-ul deschis și de filtrele active. Apasă
+tasta \kbd{/} oriunde pe dashboard pentru a ajunge direct în ea.
+
+\begin{itemize}
+  \item Scrie cel puțin două litere. Diacriticele nu contează: „brasov”
+        găsește și „Brașov”.
+  \item Sugestiile sunt grupate în \emph{Stații} (după nume sau cod) și
+        \emph{Treceri la nivel} (după stațiile între care se află, SRCF,
+        secția CT sau numărul trecerii, de exemplu \code{\#120}). Sunt afișate
+        cel mult cinci rezultate din fiecare grup, cele care încep cu textul
+        căutat primele.
+  \item Alege un rezultat cu mouse-ul sau cu săgețile și \kbd{Enter}.
+        Rezultatul este selectat, adăugat pe hartă și evidențiat, iar tabelul
+        lui se deschide la rândul respectiv. Filtrele tabelului sunt șterse,
+        ca să nu ascundă rândul căutat.
+\end{itemize}
+
 \subsection{Filtrarea tabelelor}
 
 Fiecare coloană are un filtru în al doilea rând al antetului:
@@ -384,15 +422,27 @@ Fiecare coloană are un filtru în al doilea rând al antetului:
         căror valoare \emph{conține} textul introdus, fără să conteze literele
         mari sau mici. Dacă scrii \code{CT1} în \emph{Secția CT}, rămân toate
         secțiile care conțin „CT1”.
-  \item \textbf{Filtrele cu listă} (\emph{Tip, Instalație, Config, Producător,
-        Regim}) păstrează doar rândurile cu exact valoarea aleasă. Opțiunea
-        \ui{Toate} dezactivează filtrul.
+  \item \textbf{Filtrele cu listă} (\emph{SRCF, Tip, Magistrală, Instalație,
+        Config, Producător, Regim}) păstrează doar rândurile cu exact valoarea
+        aleasă. Opțiunea \ui{Toate} dezactivează filtrul.
 \end{itemize}
 
+Filtrele text nu țin cont de litere mari sau mici și nici de diacritice.
 Filtrele se combină: un rând este afișat doar dacă îndeplinește \emph{toate}
 filtrele active. Cât timp există filtre active, titlul tabelului arată
 „\emph{N din M rânduri}”, iar butonul \ui{Șterge filtrele}
 le resetează pe toate.
+
+Tabelul afișează la început primele 100 de rânduri și le adaugă pe
+următoarele pe măsură ce derulezi în jos, astfel încât pagina rămâne rapidă
+chiar și cu peste 2\,000 de stații.
+
+\paragraph{Exportul în CSV.} Butonul \ui{CSV} din antetul tabelului descarcă
+rândurile care corespund filtrelor curente (toate, nu doar cele derulate pe
+ecran) într-un fișier \file{treceri-la-nivel-AAAA-LL-ZZ.csv} sau
+\file{statii-AAAA-LL-ZZ.csv}. Coloanele sunt separate prin punct și virgulă,
+iar fișierul este codificat UTF-8, astfel încât se deschide corect în Excel,
+cu tot cu diacritice.
 
 \subsection{Selectarea rândurilor și afișarea lor pe hartă}
 
@@ -430,11 +480,53 @@ punctele deja afișate pe hartă -- harta se schimbă doar când apeși din nou
   \item Dacă selectezi un rând care este deja pe hartă, harta „zboară” până la
         el și îl evidențiază cu un punct mai mare, \textcolor{cframber}{\textbf{galben}}.
         Rândul corespunzător din tabel este și el evidențiat.
+  \item \textbf{Apasă pe un punct} ca să deschizi tabelul lui: aplicația
+        trece pe tab-ul potrivit, derulează până la rând și îl evidențiază.
   \item Etichetele \ui{Treceri} și \ui{Stații} de deasupra hărții arată câte
         puncte de fiecare tip sunt afișate. Apasă pe o etichetă ca să ascunzi
         sau să reafișezi stratul respectiv; apasă pe \ui{$\times$} ca să-l
         elimini de pe hartă.
 \end{itemize}
+
+\paragraph{Cea mai apropiată stație.} Fereastra cu detaliile unei treceri
+arată și stația cea mai apropiată, împreună cu distanța în linie dreaptă
+până la ea. Când o trecere este evidențiată, harta trasează o linie
+punctată până la acea stație și îi afișează numele și distanța. Distanța
+este calculată cu formula haversine, pe toate stațiile din baza de date,
+nu doar pe cele afișate.
+
+\paragraph{Colorarea trecerilor.} Lista \ui{Culoare treceri} din antetul
+hărții colorează punctele trecerilor după \emph{instalație},
+\emph{configurație}, \emph{regim}, \emph{tip} sau \emph{producător}. În acest
+mod trecerile nu mai sunt grupate, ca să se vadă distribuția fiecărei
+categorii, iar în colțul hărții apare o legendă cu numărul de treceri din
+fiecare categorie. Aplicația folosește doar trei culori, alese să rămână
+distinctibile și pentru persoanele cu deficiențe de vedere a culorilor;
+valorile necunoscute sunt întotdeauna gri. Opțiunea \ui{Uniformă} revine la
+afișarea obișnuită.
+
+\subsection{Statisticile}
+
+Tab-ul \ui{Statistici} oferă o imagine de ansamblu asupra tuturor trecerilor
+la nivel, fără să fie nevoie de selecții:
+
+\begin{itemize}
+  \item \textbf{Indicatori}: numărul total de treceri și de stații, procentul
+        trecerilor care funcționează automat și numărul trecerilor fără
+        coordonate.
+  \item \textbf{Treceri pe sucursală} și \textbf{treceri pe producător}:
+        grafice cu bare, ordonate descrescător. Ține mouse-ul deasupra unei
+        bare ca să vezi și procentul din total.
+  \item \textbf{Primele 10 magistrale} după numărul de treceri.
+  \item \textbf{Tipuri de instalații}: câte o bară împărțită pe categorii
+        pentru instalație (BAT/SAT), configurație, regim și tip (LC/stație),
+        cu procentele fiecărei categorii.
+\end{itemize}
+
+Orice bară sau categorie se poate apăsa: aplicația deschide tab-ul
+\ui{Treceri la nivel} cu filtrul corespunzător deja aplicat -- de exemplu,
+un clic pe „Aerofina” afișează doar trecerile acestui producător, care pot fi
+apoi selectate și afișate pe hartă.
 
 Înregistrările fără coordonate valide (lipsă sau 0,0) nu apar pe hartă, fără
 niciun mesaj; ele rămân însă vizibile în tabele.
@@ -627,12 +719,31 @@ Migrarea va fi aplicată automat la următoarea pornire a backend-ului.
     pe hartă și definește coloanele fiecărui tabel (\code{LOG\_COLUMNS},
     \code{STATION\_COLUMNS}).
   \item[\file{components/DataPanel.tsx}] Un tabel reutilizabil cu filtre pe
-    fiecare coloană, selecție de rânduri și butonul \ui{Afișează pe hartă}. Rândurile
-    sunt memoizate, astfel încât bifarea unei căsuțe nu redesenează mii de
-    rânduri.
+    fiecare coloană, selecție de rânduri, export CSV și butonul
+    \ui{Afișează pe hartă}. Filtrele sunt păstrate în pagina părinte, ca
+    statisticile și căutarea să poată deschide tabelul deja filtrat. Rândurile
+    sunt memoizate și montate câte 100 pe măsură ce utilizatorul derulează,
+    astfel încât bifarea unei căsuțe sau schimbarea tab-ului nu redesenează
+    mii de rânduri.
   \item[\file{components/GeoMap.tsx}] Harta Leaflet: stratul de fundal,
     punctele grupate pentru fiecare strat, ferestrele cu detalii, încadrarea
-    automată și deplasarea către punctul selectat.
+    automată și deplasarea către punctul selectat. Punctele sunt create direct
+    prin Leaflet, nu ca o componentă React pentru fiecare punct, iar
+    ferestrele cu detalii sunt generate abia când sunt deschise; în modul
+    colorat, trecerile sunt desenate pe un \code{canvas}. Tot aici sunt
+    legenda și linia către cea mai apropiată stație.
+  \item[\file{components/StatsPanel.tsx}] Tab-ul de statistici: indicatorii,
+    graficele cu bare și barele cu ponderi, desenate cu HTML și CSS, fără o
+    bibliotecă de grafice.
+  \item[\file{components/GlobalSearch.tsx}] Caseta de căutare: indexează o
+    singură dată numele fără diacritice și oferă sugestii navigabile cu
+    tastatura (rolurile ARIA \code{combobox}/\code{listbox}).
+  \item[\file{lib/geo.ts}] Distanța haversine și căutarea celei mai apropiate
+    stații.
+  \item[\file{lib/categories.ts}] Etichetele afișate pentru valorile din baza
+    de date (de exemplu \code{\_} devine „Necunoscut”) și culorile
+    categoriilor, comune hărții și statisticilor.
+  \item[\file{lib/csv.ts}] Construirea și descărcarea fișierelor CSV.
   \item[\file{lib/api.ts}] Construiește adresa completă pentru fiecare cerere
     API. Toate cererile trimit
     \code{credentials: "include"}, astfel încât cookie-ul de sesiune să
