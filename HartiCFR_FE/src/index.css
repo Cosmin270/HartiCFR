@@ -133,10 +133,19 @@ body {
   font-family: var(--font-body);
   color: var(--color-foreground);
   background-color: var(--color-background);
-  background-image: var(--gradient-app);
-  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* The page glow lives on its own fixed layer. As a body background with
+   background-attachment: fixed it was repainted on every scroll frame. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--gradient-app);
+  pointer-events: none;
 }
 
 ::selection {
@@ -199,12 +208,6 @@ body {
 @keyframes slide-down {
   from { opacity: 0; transform: translateY(-100%); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-/* Slow hue drift for gradient surfaces */
-@keyframes gradient-drift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

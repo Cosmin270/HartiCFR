@@ -3,14 +3,30 @@
   flex: 1 1 50%;
   min-width: 0;
   overflow: hidden;
+  isolation: isolate;
   background: var(--gradient-hero);
-  background-size: 160% 160%;
-  animation: gradient-drift 14s ease-in-out infinite;
   color: var(--color-on-hero);
   padding: 56px 56px 40px;
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+/* Slow drift of the hero gradient. It moves a wider copy of the gradient
+   with transform, which the compositor handles without repainting; animating
+   background-position repainted half the screen on every frame. */
+.auth-left::before {
+  content: "";
+  position: absolute;
+  inset: 0 -60% 0 0;
+  z-index: -1;
+  background: var(--gradient-hero);
+  animation: hero-drift 14s ease-in-out infinite alternate;
+}
+
+@keyframes hero-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-30%); }
 }
 
 .auth-left__decor {
@@ -181,7 +197,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-left {
+  .auth-left::before {
     animation: none;
   }
   .auth-left__decor .line {

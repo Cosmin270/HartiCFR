@@ -37,6 +37,11 @@ const TABS: { key: MapLayer; label: string }[] = [
     { key: "stations", label: "Stații" },
 ];
 
+// Shared empty lists for hidden map layers, so hiding a layer does not hand
+// the memoized map a new array on every render.
+const NO_LOGS: Log[] = [];
+const NO_STATIONS: Station[] = [];
+
 function toggleInSet(prev: Set<number>, id: number): Set<number> {
     const next = new Set(prev);
     if (next.has(id)) next.delete(id);
@@ -168,8 +173,8 @@ export default function DashboardPage() {
         navigate("/login");
     }
 
-    const visibleCrossings = showCrossings ? renderedLogs : [];
-    const visibleStations = showStations ? renderedStations : [];
+    const visibleCrossings = showCrossings ? renderedLogs : NO_LOGS;
+    const visibleStations = showStations ? renderedStations : NO_STATIONS;
     const plottedCount = renderedLogs.length + renderedStations.length;
     const activeRecords = tab === "crossings" ? logs.length : stations.length;
     const activeSelected = tab === "crossings" ? selectedLogs.size : selectedStations.size;

@@ -1,6 +1,11 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 export type ColumnFilter = "text" | "select";
+
+// Rows are mounted in pages as the user scrolls. Mounting all ~2,300 at once
+// made every tab switch, "select all" and filter change lay out the full
+// table, which froze the page for a second or more.
+const PAGE_SIZE = 100;
 
 export interface ColumnDef<T> {
     key: string;
@@ -83,6 +88,9 @@ export default function DataPanel<T extends { id: number }>({
 }: DataPanelProps<T>) {
     const plotCount = renderCount ?? selected.size;
     const [filters, setFilters] = useState<Record<string, string>>({});
+    const [limit, setLimit] = useState(PAGE_SIZE);
+    const wrapRef = useRef<HTMLDivElement>(null);
+    const moreRef = useRef<HTMLTableRowElement>(null);
 
     const selectOptions = useMemo(() => {
         const map: Record<string, string[]> = {};
@@ -117,8 +125,36 @@ export default function DataPanel<T extends { id: number }>({
     const allSelected =
         filtered.length > 0 && filteredIds.every((id) => selected.has(id));
 
+    const visible = useMemo(() => filtered.slice(0, limit), [filtered, limit]);
+    const hasMore = limit < filtered.length;
+
+    // Grow the window when the placeholder row nears the bottom of the scroll
+    // area. Re-observing after every growth makes the observer report again
+    // if the placeholder is still in view (e.g. after a fast scroll).
+    useEffect(() => {
+        const target = moreRef.current;
+        if (!hasMore || hidden || !target) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((e) => e.isIntersecting)) {
+                    setLimit((l) => l + PAGE_SIZE);
+                }
+            },
+            { root: wrapRef.current, rootMargin: "300px 0px" }
+        );
+        observer.observe(target);
+        return () => observer.disconnect();
+    }, [hasMore, hidden, limit]);
+
     function setFilter(key: string, value: string) {
         setFilters((prev) => ({ ...prev, [key]: value }));
+        setLimit(PAGE_SIZE);
+        wrapRef.current?.scrollTo({ top: 0 });
+    }
+
+    function clearFilters() {
+        setFilters({});
+        setLimit(PAGE_SIZE);
     }
 
     return (
@@ -136,7 +172,7 @@ export default function DataPanel<T extends { id: number }>({
                 </h2>
                 <div className="panel__actions">
                     {anyFilterActive && (
-                        <button type="button" className="btn-clear" onClick={() => setFilters({})}>
+                        <button type="button" className="btn-clear" onClick={clearFilters}>
                             Șterge filtrele
                         </button>
                     )}
@@ -160,7 +196,7 @@ export default function DataPanel<T extends { id: number }>({
                 </div>
             </div>
 
-            <div className="log-table-wrap">
+            <div className="log-table-wrap" ref={wrapRef}>
                 <table className="log-table">
                     <thead>
                         <tr className="head-labels">
@@ -225,7 +261,7 @@ export default function DataPanel<T extends { id: number }>({
                             ))}
 
                         {!loading &&
-                            filtered.map((row) => (
+                            visible.map((row) => (
                                 <TableRow
                                     key={row.id}
                                     row={row}
@@ -235,6 +271,14 @@ export default function DataPanel<T extends { id: number }>({
                                     onToggle={onToggleRow}
                                 />
                             ))}
+
+                        {!loading && hasMore && (
+                            <tr ref={moreRef} className="log-table__more">
+                                <td colSpan={columns.length + 1}>
+                                    Se încarcă mai multe rânduri… ({visible.length} din {filtered.length})
+                                </td>
+                            </tr>
+                        )}
 
                         {!loading && filtered.length === 0 && (
                             <tr>
