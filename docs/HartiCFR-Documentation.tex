@@ -30,6 +30,7 @@
 \definecolor{cfrteal}{HTML}{0D9488}
 \definecolor{cfrviolet}{HTML}{7C3AED}
 \definecolor{cframber}{HTML}{F59E0B}
+\definecolor{cforange}{HTML}{EA580C}
 \definecolor{codebg}{HTML}{F5F5F4}
 \definecolor{codeframe}{HTML}{D6D3D1}
 \definecolor{notebg}{HTML}{ECFDF5}
@@ -131,7 +132,12 @@ aplicație.
 \begin{itemize}
   \item \textbf{Conturi de utilizator}: creare cont, autentificare și
         deconectare; datele sunt vizibile doar utilizatorilor autentificați.
-  \item \textbf{Două tabele}: \ui{Treceri la nivel} și \ui{Statii}, fiecare cu
+  \item \textbf{Cont demo}: aplicația poate fi încercată imediat, fără
+        înregistrare, cu butonul \ui{Încearcă fără cont (demo)}.
+  \item \textbf{Pornire la rece gestionată}: cât timp serverul se trezește din
+        repaus, aplicația afișează un mesaj cu timpul scurs și continuă
+        singură când serverul este gata.
+  \item \textbf{Două tabele}: \ui{Treceri la nivel} și \ui{Stații}, fiecare cu
         toate înregistrările din baza de date.
   \item \textbf{Filtrare pe fiecare coloană}: căutare după text (de exemplu
         numele unei stații) sau alegere dintr-o listă (de exemplu tipul
@@ -139,7 +145,7 @@ aplicație.
   \item \textbf{Selecție}: rânduri individuale sau toate rândurile care
         corespund filtrelor, dintr-un singur clic; trecerile și stațiile pot
         fi selectate împreună.
-  \item \textbf{Hartă interactivă}: butonul \ui{Render} afișează selecția pe
+  \item \textbf{Hartă interactivă}: butonul \ui{Afișează pe hartă} afișează selecția pe
         hartă, cu culori diferite pentru treceri și stații, grupare automată a
         punctelor apropiate și detalii complete la trecerea mouse-ului.
   \item \textbf{Straturi}: trecerile și stațiile pot fi ascunse, reafișate
@@ -196,11 +202,12 @@ apar în tabel, dar nu pot fi afișate pe hartă.
 \subsection{Cum se folosește, pe scurt}
 
 \begin{enumerate}
-  \item Deschizi \url{https://harticfr.onrender.com} și îți creezi un cont.
-  \item Te autentifici și ajungi pe dashboard.
-  \item Alegi tab-ul \ui{Treceri la nivel} sau \ui{Statii} și filtrezi
+  \item Deschizi \url{https://harticfr.onrender.com} și apeși
+        \ui{Încearcă fără cont (demo)} -- sau îți creezi un cont propriu.
+  \item Ajungi direct pe dashboard.
+  \item Alegi tab-ul \ui{Treceri la nivel} sau \ui{Stații} și filtrezi
         tabelul până rămân înregistrările care te interesează.
-  \item Le selectezi (una câte una sau toate deodată) și apeși \ui{Render}.
+  \item Le selectezi (una câte una sau toate deodată) și apeși \ui{Afișează pe hartă}.
   \item Explorezi harta: apropii, depărtezi și ții mouse-ul deasupra
         punctelor pentru detalii.
 \end{enumerate}
@@ -299,37 +306,51 @@ Deschide \url{https://harticfr.onrender.com} în orice browser modern
 \begin{warning}[Prima încărcare poate dura]
 Aplicația rulează pe planul gratuit Render. După aproximativ 15 minute fără
 vizitatori, serverul intră în repaus, iar prima cerere de după îl trezește în
-aproximativ un minut. Dacă pagina sau tabelele se încarcă greu la prima
-vizită, așteaptă puțin și reîncarcă pagina.
+aproximativ un minut. Aplicația detectează această situație: pe pagina de
+start apare mesajul \emph{Serverul pornește\dots} cu numărul de secunde
+scurse, iar butoanele de autentificare se activează singure când serverul
+răspunde. Nu este nevoie să reîncarci pagina.
 \end{warning}
+
+\begin{note}[Cont demo]
+Pentru a încerca aplicația fără să îți creezi un cont, apasă
+\ui{Încearcă fără cont (demo)} pe pagina de start sau pe pagina de
+autentificare. Contul poate fi folosit și din formularul de autentificare:
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+E-mail: & \code{demo@harticfr.ro} \\
+Parolă: & \code{demo1234} \\
+\end{tabular}
+\end{center}
+\end{note}
 
 \section{Utilizarea aplicației}
 \label{sec:usage}
 
-Interfața aplicației este în limba engleză, așa că numele butoanelor sunt
-scrise mai jos exact cum apar pe ecran.
+Interfața aplicației este în limba română; numele butoanelor sunt scrise
+mai jos exact cum apar pe ecran.
 
 \subsection{Crearea unui cont și autentificarea}
 
 \begin{enumerate}
-  \item Deschide site-ul. Pagina de start oferă butoanele \ui{Log in}
-        (autentificare) și \ui{Create an account} (creare cont).
-  \item Alege \ui{Create an account}, completează numele, adresa de e-mail și
-        parola, apoi apasă \ui{Create account}. Fiecare adresă de e-mail poate
-        fi înregistrată o singură dată.
-  \item Autentifică-te cu aceeași adresă de e-mail și parolă. Vei ajunge pe
-        \textbf{dashboard}.
+  \item Deschide site-ul. Pagina de start prezintă pe scurt aplicația și
+        oferă butoanele \ui{Autentificare}, \ui{Creează un cont} și
+        \ui{Încearcă fără cont (demo)}.
+  \item Alege \ui{Creează un cont}, completează numele, adresa de e-mail și
+        parola (cel puțin 6 caractere), apoi apasă \ui{Creează contul}.
+        Fiecare adresă de e-mail poate fi înregistrată o singură dată.
+  \item După creare ești autentificat automat și ajungi pe
+        \textbf{dashboard}. Data viitoare folosește \ui{Autentificare} cu
+        aceeași adresă de e-mail și parolă.
 \end{enumerate}
 
-\begin{warning}
-Crearea contului \emph{nu} te autentifică automat. După ce apeși
-\ui{Create account}, aplicația încearcă pentru scurt timp să deschidă
-dashboard-ul și apoi te trimite la pagina de autentificare -- acest
-comportament este normal. Autentifică-te cu contul pe care tocmai l-ai creat.
-\end{warning}
+Dacă datele introduse nu sunt valide (nume gol, adresă de e-mail greșită,
+parolă prea scurtă sau e-mail deja folosit), formularul afișează un mesaj care
+explică problema.
 
 Rămâi autentificat timp de 7 zile; fiecare vizită prelungește sesiunea.
-Butonul \ui{Log out} din colțul din dreapta sus încheie sesiunea. Dacă
+Butonul \ui{Deconectare} din colțul din dreapta sus încheie sesiunea. Dacă
 deschizi \code{/dashboard} fără să fii autentificat, ești trimis la pagina de
 autentificare.
 
@@ -339,7 +360,7 @@ Dashboard-ul are trei zone:
 
 \begin{itemize}
   \item \textbf{Bara de sus}, cu două tab-uri -- \ui{Treceri la nivel} și
-        \ui{Statii} -- și butonul \ui{Log out}.
+        \ui{Stații} -- și butonul \ui{Deconectare}.
   \item \textbf{Tabelul} pentru tab-ul selectat, cu un filtru sub antetul
         fiecărei coloane.
   \item \textbf{Harta}, în dreapta pe ecranele mari și sub tabel pe telefoane
@@ -347,27 +368,30 @@ Dashboard-ul are trei zone:
 \end{itemize}
 
 Deasupra tabelului, trei contoare arată câte înregistrări are tab-ul curent
-(\textbf{Records}), câte rânduri sunt selectate în total, din ambele tab-uri
-(\textbf{Selected}), și câte sunt afișate în acest moment pe hartă
-(\textbf{Plotted}).
+(\textbf{Înregistrări}), câte rânduri sunt selectate în total, din ambele
+tab-uri (\textbf{Selectate}), și câte sunt afișate în acest moment pe hartă
+(\textbf{Pe hartă}).
+
+Dacă datele nu pot fi încărcate, deasupra tabelului apare un mesaj de eroare
+cu butonul \ui{Reîncearcă}.
 
 \subsection{Filtrarea tabelelor}
 
 Fiecare coloană are un filtru în al doilea rând al antetului:
 
 \begin{itemize}
-  \item \textbf{Filtrele text} (\emph{Filter\dots}) păstrează rândurile a
+  \item \textbf{Filtrele text} (\emph{Filtrează\dots}) păstrează rândurile a
         căror valoare \emph{conține} textul introdus, fără să conteze literele
-        mari sau mici. Dacă scrii \code{CT1} în \emph{Sectia CT}, rămân toate
+        mari sau mici. Dacă scrii \code{CT1} în \emph{Secția CT}, rămân toate
         secțiile care conțin „CT1”.
-  \item \textbf{Filtrele cu listă} (\emph{Tip, Instalatie, Config, Producator,
+  \item \textbf{Filtrele cu listă} (\emph{Tip, Instalație, Config, Producător,
         Regim}) păstrează doar rândurile cu exact valoarea aleasă. Opțiunea
-        \ui{All} dezactivează filtrul.
+        \ui{Toate} dezactivează filtrul.
 \end{itemize}
 
 Filtrele se combină: un rând este afișat doar dacă îndeplinește \emph{toate}
 filtrele active. Cât timp există filtre active, titlul tabelului arată
-„\emph{N of M rows}” (N din M rânduri), iar butonul \ui{Clear filters}
+„\emph{N din M rânduri}”, iar butonul \ui{Șterge filtrele}
 le resetează pe toate.
 
 \subsection{Selectarea rândurilor și afișarea lor pe hartă}
@@ -379,21 +403,21 @@ le resetează pe toate.
         rândurile care corespund filtrelor curente} -- o metodă rapidă de a
         afișa, de exemplu, toate trecerile realizate de un anumit producător.
   \item Selecțiile se păstrează când schimbi tab-ul, deci poți selecta câteva
-        treceri, trece la \ui{Statii}, selecta câteva stații și le poți afișa
+        treceri, trece la \ui{Stații}, selecta câteva stații și le poți afișa
         împreună.
-  \item Apasă \ui{Render (N)}. Toate trecerile și stațiile selectate apar pe
+  \item Apasă \ui{Afișează pe hartă (N)}. Toate trecerile și stațiile selectate apar pe
         hartă. Pe telefon, pagina coboară automat până la hartă.
 \end{enumerate}
 
-\ui{Clear selection} debifează toate rândurile din tab-ul curent. Nu șterge
+\ui{Deselectează tot} debifează toate rândurile din tab-ul curent. Nu șterge
 punctele deja afișate pe hartă -- harta se schimbă doar când apeși din nou
-\ui{Render}.
+\ui{Afișează pe hartă}.
 
 \subsection{Citirea hărții}
 
 \begin{itemize}
   \item Punctele \textcolor{cfrteal}{\textbf{verzi-albăstrui}} sunt treceri la
-        nivel, iar cele \textcolor{cfrviolet}{\textbf{violet}} sunt stații.
+        nivel, iar cele \textcolor{cforange}{\textbf{portocalii}} sunt stații.
   \item Punctele apropiate sunt grupate într-un cerc cu un număr. Apropie
         harta (zoom) sau apasă pe cerc ca să-l desfaci; de la nivelul de zoom
         13, fiecare punct apare separat.
@@ -401,12 +425,12 @@ punctele deja afișate pe hartă -- harta se schimbă doar când apeși din nou
         pentru o trecere -- SRCF, secția CT, kilometrul, tipul, magistrala,
         instalația, configurația, producătorul, regimul de funcționare și
         coordonatele; pentru o stație -- codul și coordonatele.
-  \item După \ui{Render}, harta se încadrează automat astfel încât să cuprindă
+  \item După \ui{Afișează pe hartă}, harta se încadrează automat astfel încât să cuprindă
         toate punctele afișate.
   \item Dacă selectezi un rând care este deja pe hartă, harta „zboară” până la
-        el și îl evidențiază cu \textcolor{cframber}{\textbf{portocaliu}}.
+        el și îl evidențiază cu un punct mai mare, \textcolor{cframber}{\textbf{galben}}.
         Rândul corespunzător din tabel este și el evidențiat.
-  \item Etichetele \ui{Treceri} și \ui{Statii} de deasupra hărții arată câte
+  \item Etichetele \ui{Treceri} și \ui{Stații} de deasupra hărții arată câte
         puncte de fiecare tip sunt afișate. Apasă pe o etichetă ca să ascunzi
         sau să reafișezi stratul respectiv; apasă pe \ui{$\times$} ca să-l
         elimini de pe hartă.
@@ -477,8 +501,9 @@ creării.
 
 Site-ul redirecționează toate cererile \code{/api/...} către backend, deci
 endpoint-urile se apelează prin adresa site-ului,
-\url{https://harticfr.onrender.com}. Excepție face \code{/health}, care se
-află direct pe backend: \url{https://harticfr-api.onrender.com/health}. Corpurile cererilor și răspunsurilor
+\url{https://harticfr.onrender.com}. Verificarea stării este disponibilă
+atât ca \code{/api/health} (prin site), cât și direct pe backend:
+\url{https://harticfr-api.onrender.com/health}. Corpurile cererilor și răspunsurilor
 sunt în format JSON. Endpoint-urile marcate în coloana \textbf{Auth}
 returnează \code{401 Unauthorized} dacă cererea nu conține cookie-ul de
 sesiune obținut prin \code{/api/auth/login}.
@@ -488,10 +513,11 @@ sesiune obținut prin \code{/api/auth/login}.
 \textbf{Metodă} & \textbf{Cale} & \textbf{Auth} & \textbf{Ce face} \\
 \midrule
 \endhead
-GET  & \code{/health}                    & nu & Returnează \code{\{"status":"ok"\}}; folosit pentru a verifica dacă serverul funcționează. \\
-POST & \code{/api/auth/register}         & nu & Creează un cont. Corp: \code{username}, \code{email}, \code{password}. \code{400} dacă e-mailul există deja. \\
+GET  & \code{/health}, \code{/api/health} & nu & Returnează \code{\{"status":"ok"\}}. Render folosește \code{/health}; site-ul interoghează \code{/api/health} ca să știe când serverul s-a trezit din repaus. \\
+POST & \code{/api/auth/register}         & nu & Creează un cont și deschide sesiunea. Corp: \code{username}, \code{email}, \code{password} (minimum 6 caractere). \code{400} cu un mesaj explicativ dacă datele nu sunt valide sau e-mailul există deja. \\
 POST & \code{/api/auth/login}            & nu & Corp: \code{email}, \code{password}. Setează cookie-ul de sesiune și returnează \code{id}, \code{username}, \code{email}. \code{401} la date greșite. \\
-GET  & \code{/api/auth/me}               & da & Returnează \code{userId} și \code{username} pentru utilizatorul autentificat. \\
+POST & \code{/api/auth/demo}             & nu & Deschide o sesiune pentru contul demo. \\
+GET  & \code{/api/auth/me}               & da & Returnează \code{userId}, \code{username} și \code{email} pentru utilizatorul autentificat. \\
 POST & \code{/api/auth/logout}           & nu & Șterge cookie-ul de sesiune. \\
 GET  & \code{/api/Log/logs}              & da & Listează toate trecerile la nivel. \\
 GET  & \code{/api/Log/logs/\{id\}}       & da & O singură trecere sau \code{404}. \\
@@ -588,15 +614,20 @@ Migrarea va fi aplicată automat la următoarea pornire a backend-ului.
   \item[\file{src/App.tsx}] Definește paginile: \code{/} (pagina de start),
     \code{/login}, \code{/signin} (creare cont) și \code{/dashboard}.
     Dashboard-ul este protejat de \code{ProtectedRoute}.
-  \item[\file{components/ProtectedRoute.tsx}] Apelează \code{/api/auth/me}
-    înainte de a afișa o pagină protejată și redirecționează la
-    \code{/login} dacă nu există o sesiune.
+  \item[\file{components/ServerStatus.tsx}] Interoghează \code{/api/health}
+    la pornirea aplicației, cu reîncercări la fiecare 3 secunde, și
+    expune starea serverului (\emph{checking}, \emph{waking}, \emph{ready},
+    \emph{down}). Afișează mesajul \emph{Serverul pornește\dots} pe paginile
+    de autentificare și un ecran de așteptare în fața dashboard-ului.
+  \item[\file{components/ProtectedRoute.tsx}] Așteaptă ca serverul să fie
+    pornit, apoi apelează \code{/api/auth/me} înainte de a afișa o pagină
+    protejată și redirecționează la \code{/login} dacă nu există o sesiune.
   \item[\file{pages/DashboardPage.tsx}] Încarcă o singură dată trecerile și
     stațiile, reține selecțiile, înregistrările afișate și punctul evidențiat
     pe hartă și definește coloanele fiecărui tabel (\code{LOG\_COLUMNS},
     \code{STATION\_COLUMNS}).
   \item[\file{components/DataPanel.tsx}] Un tabel reutilizabil cu filtre pe
-    fiecare coloană, selecție de rânduri și butonul \ui{Render}. Rândurile
+    fiecare coloană, selecție de rânduri și butonul \ui{Afișează pe hartă}. Rândurile
     sunt memoizate, astfel încât bifarea unei căsuțe nu redesenează mii de
     rânduri.
   \item[\file{components/GeoMap.tsx}] Harta Leaflet: stratul de fundal,
@@ -653,31 +684,32 @@ copiate din nou, iar utilizatorii trebuie să își creeze din nou conturile.
 \textbf{Problemă} & \textbf{Ce faci} \\
 \midrule
 \endhead
-Pagina se încarcă foarte greu la prima vizită &
-  Serverul era în repaus (planul gratuit). Așteaptă aproximativ un minut și
-  reîncarcă pagina. \\[4pt]
-„Could not load data. Is the server running?” pe dashboard &
-  Backend-ul încă pornește sau nu răspunde. Așteaptă un minut și reîncarcă;
-  dacă problema persistă, verifică starea serviciului \code{harticfr-api} în
-  dashboard-ul Render. \\[4pt]
+Apare mesajul „Serverul pornește\dots” &
+  Serverul era în repaus (planul gratuit). Așteaptă; aplicația continuă
+  singură când serverul răspunde, de obicei în mai puțin de un minut. \\[4pt]
+Apare „Serverul nu răspunde” &
+  Serverul nu a răspuns timp de două minute. Verifică conexiunea la internet
+  și apasă \ui{Reîncearcă}; dacă problema persistă, verifică starea
+  serviciului \code{harticfr-api} în dashboard-ul Render. \\[4pt]
+„Nu am putut încărca datele de pe server.” pe dashboard &
+  Apasă \ui{Reîncearcă}. Dacă problema persistă, verifică starea serviciului
+  \code{harticfr-api} în dashboard-ul Render. \\[4pt]
 Harta afișează „API KEY REQUIRED” &
   Cheia CARTO pentru fundalul hărții lipsește sau nu mai este valabilă.
   Administratorul aplicației trebuie să o actualizeze. \\[4pt]
 Zona hărții este complet gri &
   Nu există conexiune la internet sau imaginile hărții sunt blocate;
   verifică uneltele de dezvoltator ale browserului (tab-ul Network). \\[4pt]
-Tabelele sunt goale („No crossings found”) &
+Tabelele sunt goale („Nu există treceri la nivel.”) &
   Baza de date nu are date (de exemplu, a fost recreată); vezi
   secțiunea~\ref{sec:data}. \\[4pt]
-După crearea contului ajung pe pagina de autentificare &
-  Este normal: înregistrarea nu te autentifică. Autentifică-te cu contul
-  nou. \\[4pt]
 Autentificarea reușește, dar sunt trimis înapoi la pagina de login &
   Cookie-ul nu a fost salvat. Verifică dacă browserul permite cookie-uri
   pentru site. \\[4pt]
 Contul meu nu mai există &
   Baza de date gratuită a fost probabil recreată după 30 de zile. Creează-ți
-  din nou contul. \\[4pt]
+  din nou contul sau folosește contul demo, care este recreat automat la
+  pornirea serverului. \\[4pt]
 O înregistrare selectată nu apare pe hartă &
   Nu are coordonate (sau are 0,0) în baza de date, deci nu poate fi
   poziționată. \\
