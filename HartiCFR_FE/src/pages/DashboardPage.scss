@@ -798,6 +798,9 @@ body.is-map-fullscreen {
     }
 
     select {
+      // Wide enough for the longest short values ("Timisoara", "Automat")
+      // so the chosen option is not clipped.
+      min-width: 108px;
       cursor: pointer;
     }
   }
