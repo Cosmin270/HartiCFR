@@ -287,8 +287,10 @@
   }
 }
 
+/* No entrance animation on markers or cluster badges: the cluster layer
+   removes and re-adds hundreds of icons on every zoom and pan, and replaying
+   an animation on each one cost seconds of style work and visible stutter. */
 .map-marker {
-  animation: marker-in 300ms var(--ease-out) both;
   transition: box-shadow 200ms var(--ease-out);
 }
 
@@ -307,18 +309,12 @@
   }
 }
 
-@keyframes marker-in {
-  from { opacity: 0; transform: scale(0.4); }
-  to { opacity: 1; transform: scale(1); }
-}
-
 @keyframes marker-pulse {
   from { transform: scale(1); opacity: 1; }
   to { transform: scale(2.2); opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-marker,
   .map-marker--focused::after {
     animation: none;
   }
@@ -326,16 +322,9 @@
 
 /* Cluster badges, matched to the design system */
 .map-cluster > div {
-  animation: marker-in 250ms var(--ease-out) both;
   transition: transform 150ms var(--ease-out);
 }
 
 .leaflet-marker-cluster:hover .map-cluster > div {
   transform: scale(1.08);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .map-cluster > div {
-    animation: none;
-  }
 }

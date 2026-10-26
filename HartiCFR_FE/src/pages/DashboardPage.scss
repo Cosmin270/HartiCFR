@@ -1,3 +1,18 @@
+// Hides an inactive tab without discarding its rendering. display: none (or
+// switching position) makes the browser rebuild the table on the way back:
+// every one of up to 1,211 rows x 15 cells is restyled and the entrance
+// animations replay, which took over a second per tab switch. Collapsing
+// the box in place with content-visibility: hidden skips its rendering but
+// keeps the rows' layout and style, so showing it again is cheap.
+@mixin kept-hidden {
+  content-visibility: hidden;
+  height: 0;
+  min-height: 0;
+  margin: 0;
+  border-width: 0;
+  box-shadow: none;
+}
+
 .dashboard {
   min-height: 100dvh;
 
@@ -52,7 +67,7 @@
     align-items: start;
 
     &.is-hidden {
-      display: none;
+      @include kept-hidden;
     }
   }
 }
@@ -366,7 +381,7 @@
 }
 
 .panel.is-hidden {
-  display: none;
+  @include kept-hidden;
 }
 
 /* ── Map layer chips ────────────────────────────────────── */

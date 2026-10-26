@@ -231,6 +231,9 @@ function PointLayerInner<T extends Point>({
                   maxClusterRadius: 35,
                   disableClusteringAtZoom: 13,
                   chunkedLoading: true,
+                  // The split/merge animation transitions every icon on each
+                  // zoom; with thousands of points it stuttered badly.
+                  animate: false,
               })
             : L.layerGroup();
         map.addLayer(group);
