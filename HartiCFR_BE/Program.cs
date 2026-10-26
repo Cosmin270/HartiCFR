@@ -78,7 +78,9 @@ var app = builder.Build();
 // Managed hosts create an empty database; bring the schema up to date on boot.
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+    DemoAccount.Seed(db, app.Configuration);
 }
 
 if (app.Environment.IsDevelopment())
@@ -98,6 +100,9 @@ forwardedHeadersOptions.KnownProxies.Clear();
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+// Same probe under /api, so the frontend can reach it through the static
+// site's /api rewrite and tell when a cold-started instance is awake.
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 
 app.UseCors("AllowReactApp");
 app.UseAuthentication();
