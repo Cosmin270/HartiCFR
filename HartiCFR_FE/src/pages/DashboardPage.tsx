@@ -5,6 +5,7 @@ import type { Station } from "../types/station";
 import DataPanel, { type ColumnDef, type Filters, type Sort } from "../components/DataPanel";
 import GeoMap, { type BaseMap, type MapFocus, type MapLayer } from "../components/GeoMap";
 import { useToast } from "../components/Toast";
+import ContactSection from "../components/ContactSection";
 import GlobalSearch from "../components/GlobalSearch";
 import StatsPanel from "../components/StatsPanel";
 import ThemeToggle from "../components/ThemeToggle";
@@ -726,6 +727,8 @@ export default function DashboardPage() {
                         </section>
                     </div>
                 )}
+
+                <ContactSection />
             </main>
         </div>
     );

@@ -24,6 +24,10 @@ services:
       # Must match the frontend's public URL exactly, or cookie auth will fail CORS.
       - key: Cors__AllowedOrigins
         value: https://harticfr.onrender.com
+      # Resend API key for the contact form (see DEPLOY.md). Secret, so it is
+      # entered in the dashboard rather than committed here.
+      - key: Resend__ApiKey
+        sync: false
 
   # React SPA served as static files.
   - type: web

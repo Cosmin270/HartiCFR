@@ -60,6 +60,16 @@ const STEPS: { title: string; body: React.ReactNode }[] = [
             </>
         ),
     },
+    {
+        title: "Contact și suport",
+        body: (
+            <>
+                La finalul paginii, în secțiunea <strong>Contact / Suport</strong>, alege categoria (
+                <strong>Bug</strong> sau <strong>Sugestie</strong>), scrie mesajul și apasă <strong>Trimite</strong>.
+                O notificare verde confirmă că mesajul a fost trimis, iar răspunsul vine pe emailul contului tău.
+            </>
+        ),
+    },
 ];
 
 export default function UserManual() {

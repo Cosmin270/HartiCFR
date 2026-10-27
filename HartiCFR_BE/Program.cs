@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Security.Claims;
+using System.Threading.RateLimiting;
 using HartiCFR_BE.Configuration;
+using HartiCFR_BE.Controllers;
 using HartiCFR_BE.Data;
 using HartiCFR_BE.Repositories;
+using HartiCFR_BE.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +31,22 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connect
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<IStationRepository, StationRepository>();
+builder.Services.AddHttpClient<IEmailSender, ResendEmailSender>();
+
+// The contact form mails the site owner, so cap it per account: a few
+// messages every ten minutes is plenty for a person and stops a flood.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(ContactController.RateLimitPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(10),
+            }));
+});
 
 var isDevelopment = builder.Environment.IsDevelopment();
 
@@ -107,6 +127,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapControllers();
 

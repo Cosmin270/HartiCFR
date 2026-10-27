@@ -60,7 +60,31 @@ scripts/copy-data-to-render.sh 'postgresql://...'   # External Database URL from
 
 User accounts are not copied; register again on the deployment.
 
-## 5. Verify
+## 5. Turn on the contact form
+
+The dashboard's **Contact / Suport** form mails bug reports and suggestions to
+`cosmin27.mocanu@gmail.com`. Render's free plan blocks outbound SMTP, so the API
+sends through [Resend](https://resend.com)'s HTTPS API instead:
+
+1. Sign up at <https://resend.com> **with `cosmin27.mocanu@gmail.com`**. Without
+   a verified domain, Resend only delivers to the address that owns the account
+   (from `onboarding@resend.dev`), which is exactly what this form needs.
+2. **API Keys** → **Create API Key** (permission: *Sending access*).
+3. On Render, open `harticfr-api` → **Environment**, set `Resend__ApiKey` to
+   the key, and save. The service restarts with the form working.
+
+Until the key is set, sending answers `503` and the form shows an error. Each
+account can send 5 messages per 10 minutes. To receive mail at another
+address, set `Contact__To` (it must then be the Resend account's address, or
+a domain must be verified in Resend and `Resend__From` set to it).
+
+For local testing, put the key in user secrets rather than a committed file:
+
+```bash
+cd HartiCFR_BE && dotnet user-secrets set "Resend:ApiKey" "re_..."
+```
+
+## 6. Verify
 
 ```bash
 curl https://harticfr-api.onrender.com/health          # {"status":"ok"}
