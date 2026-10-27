@@ -1,12 +1,11 @@
 import { useSyncExternalStore } from "react";
 
-// Light or dark colours. Until the user picks one the app follows the
-// system setting; a pick is remembered per browser. index.html applies the
-// same rule before the first paint, so a dark page never flashes white.
+// Light or dark colours. The app starts light whatever the system setting;
+// a pick is remembered per browser. index.html applies the same rule before
+// the first paint, so a dark page never flashes white.
 export type Theme = "light" | "dark";
 
 const KEY = "harticfr:theme";
-const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 const listeners = new Set<() => void>();
 
@@ -20,7 +19,7 @@ function storedTheme(): Theme | null {
 }
 
 function resolveTheme(): Theme {
-    return storedTheme() ?? (window.matchMedia(DARK_QUERY).matches ? "dark" : "light");
+    return storedTheme() ?? "light";
 }
 
 function apply() {
@@ -28,8 +27,7 @@ function apply() {
     listeners.forEach((notify) => notify());
 }
 
-// Follow the system while nothing is stored, and picks made in other tabs.
-window.matchMedia(DARK_QUERY).addEventListener("change", apply);
+// Follow picks made in other tabs.
 window.addEventListener("storage", (e) => {
     if (e.key === KEY) apply();
 });
