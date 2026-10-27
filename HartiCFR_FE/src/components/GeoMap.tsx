@@ -7,7 +7,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { Log, Position } from "../types/log";
 import type { Station } from "../types/station";
-import { formatKm, hasPosition, nearestStation } from "@/lib/geo";
+import { formatCoord, formatKm, hasPosition, nearestStation } from "@/lib/geo";
 import {
     attributeDef,
     categoryColor,
@@ -153,7 +153,7 @@ function tipHtml(layer: MapLayer, title: string, rows: [string, unknown][], foot
 }
 
 function coordText(pos: Position): string {
-    return `${pos.y.toFixed(5)}, ${pos.x.toFixed(5)}`;
+    return `${formatCoord(pos.y)}, ${formatCoord(pos.x)}`;
 }
 
 function crossingTip(log: Log, stations: Station[]): string {

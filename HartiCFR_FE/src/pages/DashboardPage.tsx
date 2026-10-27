@@ -11,7 +11,7 @@ import ThemeToggle from "../components/ThemeToggle";
 import UserManual from "../components/UserManual";
 import "./DashboardPage.scss";
 import { apiUrl } from "@/lib/api";
-import { hasPosition } from "@/lib/geo";
+import { formatCoord, hasPosition } from "@/lib/geo";
 import { clearUiState, loadUiState, saveUiState } from "@/lib/storage";
 import { countOf } from "@/lib/text";
 import {
@@ -34,16 +34,16 @@ const LOG_COLUMNS: ColumnDef<Log>[] = [
     { key: "configType", label: "Config", filter: "select", get: (l) => l.configType },
     { key: "producer", label: "Producător", filter: "select", get: (l) => producerLabel(l.producer) },
     { key: "operatingMode", label: "Regim", filter: "select", get: (l) => l.operatingMode },
-    { key: "x", label: "Longitudine", filter: "text", num: true, get: (l) => l.position?.x },
-    { key: "y", label: "Latitudine", filter: "text", num: true, get: (l) => l.position?.y },
+    { key: "x", label: "Longitudine", filter: "text", num: true, get: (l) => formatCoord(l.position?.x) },
+    { key: "y", label: "Latitudine", filter: "text", num: true, get: (l) => formatCoord(l.position?.y) },
 ];
 
 const STATION_COLUMNS: ColumnDef<Station>[] = [
     { key: "id", label: "ID", filter: "text", num: true, get: (s) => s.id },
     { key: "cod", label: "Cod", filter: "text", num: true, get: (s) => s.cod },
     { key: "name", label: "Nume stație", filter: "text", get: (s) => s.name },
-    { key: "x", label: "Longitudine", filter: "text", num: true, get: (s) => s.position?.x },
-    { key: "y", label: "Latitudine", filter: "text", num: true, get: (s) => s.position?.y },
+    { key: "x", label: "Longitudine", filter: "text", num: true, get: (s) => formatCoord(s.position?.x) },
+    { key: "y", label: "Latitudine", filter: "text", num: true, get: (s) => formatCoord(s.position?.y) },
 ];
 
 type Tab = MapLayer | "stats";

@@ -46,6 +46,12 @@ export function nearestStation(pos: Position, stations: Station[]): NearestStati
     return best;
 }
 
+// Every coordinate is shown with 6 decimals (about 10 cm), in the table, the
+// CSV export and the map tooltips alike.
+export function formatCoord(value: number | undefined): string | undefined {
+    return typeof value === "number" ? value.toFixed(6) : undefined;
+}
+
 export function formatKm(km: number): string {
     if (km < 1) return `${Math.round(km * 1000)} m`;
     return `${new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 1 }).format(km)} km`;
