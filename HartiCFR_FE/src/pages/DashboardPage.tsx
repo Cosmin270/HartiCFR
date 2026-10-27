@@ -8,6 +8,7 @@ import { useToast } from "../components/Toast";
 import GlobalSearch from "../components/GlobalSearch";
 import StatsPanel from "../components/StatsPanel";
 import ThemeToggle from "../components/ThemeToggle";
+import UserManual from "../components/UserManual";
 import "./DashboardPage.scss";
 import { apiUrl } from "@/lib/api";
 import { hasPosition } from "@/lib/geo";
@@ -441,6 +442,7 @@ export default function DashboardPage() {
 
                 <div className="appbar__end">
                     <GlobalSearch logs={logs} stations={stations} onPick={showOnMap} />
+                    <UserManual />
                     <ThemeToggle />
 
                     <button
