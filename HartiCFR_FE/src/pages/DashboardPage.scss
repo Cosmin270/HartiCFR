@@ -903,9 +903,14 @@ body.is-map-fullscreen {
     text-align: center;
     border-bottom: 1px solid var(--color-border-strong);
 
+    // Undo the filter-input sizing above (min-width, padding, border), which
+    // stretched this checkbox to 72px and set it off from the row boxes.
     input {
       width: 16px;
+      min-width: 0;
       height: 16px;
+      padding: 0;
+      border: none;
       accent-color: var(--color-primary);
       cursor: pointer;
       vertical-align: middle;
@@ -1355,22 +1360,20 @@ body.is-map-fullscreen {
     thead tr.head-labels th.check,
     thead tr.head-filters th.check {
       z-index: 4;
+      /* The filter-row padding would otherwise win over .check's and push
+         the select-all box off the row boxes' centre line. */
+      padding-left: 6px;
+      padding-right: 6px;
     }
 
     /* Comfortable tap targets for the checkboxes themselves. Row
        checkboxes sit inside a 44px row that is clickable end to end,
-       so the box itself only has to be easy to hit, not 44px wide. */
-    .check input {
+       so the box itself only has to be easy to hit, not 44px wide.
+       The select-all box is the same size so the column lines up. */
+    .check input,
+    thead tr.head-filters th.check input {
       width: 22px;
       height: 22px;
-    }
-
-    thead tr.head-filters th.check input {
-      /* min-width is reset explicitly: the filter-input sizing below
-         would otherwise stretch this checkbox out of its column. */
-      width: 24px;
-      min-width: 0;
-      height: 24px;
     }
 
     tbody td {
