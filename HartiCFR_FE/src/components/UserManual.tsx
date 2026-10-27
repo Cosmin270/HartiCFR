@@ -25,7 +25,9 @@ const STEPS: { title: string; body: React.ReactNode }[] = [
         body: (
             <>
                 Bifează rândurile dorite (caseta din capul tabelului le bifează pe toate cele filtrate), apoi apasă{" "}
-                <strong>Afișează pe hartă</strong>. Trecerile și stațiile pot fi afișate împreună.
+                <strong>Afișează pe hartă</strong>. Trecerile și stațiile pot fi afișate împreună; dacă pornești{" "}
+                <strong>Golește harta când schimbi fila</strong> (în antetul hărții), harta se golește când treci
+                între Treceri și Stații și arată doar rândurile din fila deschisă.
             </>
         ),
     },

@@ -98,6 +98,7 @@ interface SavedUi {
     renderedStations: number[];
     showCrossings: boolean;
     showStations: boolean;
+    clearOnSwitch: boolean;
 }
 
 function readSavedUi(): Partial<SavedUi> {
@@ -153,8 +154,14 @@ export default function DashboardPage() {
     const [colorBy, setColorBy] = useState<CrossingAttribute | null>(saved.colorBy ?? null);
     const [baseMap, setBaseMap] = useState<BaseMap>(saved.baseMap ?? "standard");
     const [railways, setRailways] = useState(saved.railways ?? false);
+    const [clearOnSwitch, setClearOnSwitch] = useState(saved.clearOnSwitch ?? false);
     const [mapFull, setMapFull] = useState(false);
     const mapPanelRef = useRef<HTMLElement>(null);
+    // The dataset table that was open last. A detour through the statistics
+    // tab does not count as switching between crossings and stations.
+    const layerTabRef = useRef<MapLayer>(saved.tab === "stations" ? "stations" : "crossings");
+    const clearOnSwitchRef = useRef(clearOnSwitch);
+    clearOnSwitchRef.current = clearOnSwitch;
     // Set once the saved map contents have been matched against loaded data;
     // until then, saving would overwrite them with the empty initial state.
     const restoredRef = useRef(false);
@@ -229,6 +236,7 @@ export default function DashboardPage() {
             renderedStations: renderedStations.map((s) => s.id),
             showCrossings,
             showStations,
+            clearOnSwitch,
         });
     }, [
         tab,
@@ -245,6 +253,7 @@ export default function DashboardPage() {
         renderedStations,
         showCrossings,
         showStations,
+        clearOnSwitch,
     ]);
 
     const plottedCount = renderedLogs.length + renderedStations.length;
@@ -283,9 +292,37 @@ export default function DashboardPage() {
         setFocus(wasSelected ? null : { layer: "stations", id });
     }, []);
 
+    // Every tab change goes through here. With "clear on switch" on, moving
+    // between the crossings and stations tables empties the map, so it only
+    // shows the records of the table that is open.
+    const changeTab = useCallback((next: Tab) => {
+        setTab(next);
+        if (next === "stats" || next === layerTabRef.current) return;
+        layerTabRef.current = next;
+        if (clearOnSwitchRef.current) {
+            setRenderedLogs([]);
+            setRenderedStations([]);
+            setFocus(null);
+        }
+    }, []);
+
+    function toggleClearOnSwitch() {
+        const next = !clearOnSwitch;
+        setClearOnSwitch(next);
+        toast({
+            message: next
+                ? "Harta se va goli când treci între Treceri și Stații."
+                : "Harta își păstrează punctele când schimbi fila.",
+        });
+    }
+
     function renderAll() {
-        const nextLogs = logs.filter((l) => selectedLogs.has(l.id));
-        const nextStations = stations.filter((s) => selectedStations.has(s.id));
+        // In clear-on-switch mode only the open table's selection is plotted;
+        // the other table's ticks wait until the user goes back to it.
+        const withLogs = !clearOnSwitch || tab === "crossings";
+        const withStations = !clearOnSwitch || tab === "stations";
+        const nextLogs = withLogs ? logs.filter((l) => selectedLogs.has(l.id)) : [];
+        const nextStations = withStations ? stations.filter((s) => selectedStations.has(s.id)) : [];
         setRenderedLogs(nextLogs);
         setRenderedStations(nextStations);
         setShowCrossings(true);
@@ -321,6 +358,8 @@ export default function DashboardPage() {
     // are cleared so they cannot hide the row that was asked for.
     const showOnMap = useCallback(
         (layer: MapLayer, id: number) => {
+            // Switch first: a clear-on-switch must not wipe the result below.
+            changeTab(layer);
             if (layer === "crossings") {
                 const log = logs.find((l) => l.id === id);
                 if (!log) return;
@@ -336,24 +375,29 @@ export default function DashboardPage() {
                 setShowStations(true);
                 setStationFilters(NO_FILTERS);
             }
-            setTab(layer);
             setFocus({ layer, id });
         },
-        [logs, stations]
+        [logs, stations, changeTab]
     );
 
     // Clicking a point on the map opens its table and highlights its row.
+    // This never clears the map: emptying it under the user's click would
+    // throw away the very point they just picked.
     const pickOnMap = useCallback((layer: MapLayer, id: number) => {
+        layerTabRef.current = layer;
         setTab(layer);
         setFocus({ layer, id });
     }, []);
 
     // From the statistics tab: open the crossings table filtered to one value.
-    const openFiltered = useCallback((column: string, value: string) => {
-        setLogFilters({ [column]: value });
-        setTab("crossings");
-        window.scrollTo({ top: 0 });
-    }, []);
+    const openFiltered = useCallback(
+        (column: string, value: string) => {
+            setLogFilters({ [column]: value });
+            changeTab("crossings");
+            window.scrollTo({ top: 0 });
+        },
+        [changeTab]
+    );
 
     function clearLayer(layer: MapLayer) {
         const previous = layer === "crossings" ? renderedLogs : renderedStations;
@@ -429,7 +473,7 @@ export default function DashboardPage() {
                             role="tab"
                             aria-selected={tab === t.key}
                             className={`appbar__tab${tab === t.key ? " is-active" : ""}`}
-                            onClick={() => setTab(t.key)}
+                            onClick={() => changeTab(t.key)}
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                 {t.icon}
@@ -525,7 +569,7 @@ export default function DashboardPage() {
                                 }
                                 onClearSelection={() => clearSelection("crossings")}
                                 onRender={renderAll}
-                                renderCount={totalSelected}
+                                renderCount={clearOnSwitch ? selectedLogs.size : totalSelected}
                                 hidden={tab !== "crossings"}
                             />
                             <DataPanel
@@ -547,7 +591,7 @@ export default function DashboardPage() {
                                 }
                                 onClearSelection={() => clearSelection("stations")}
                                 onRender={renderAll}
-                                renderCount={totalSelected}
+                                renderCount={clearOnSwitch ? selectedStations.size : totalSelected}
                                 hidden={tab !== "stations"}
                             />
                         </div>
@@ -630,6 +674,19 @@ export default function DashboardPage() {
                                         )}
                                     </div>
                                 </div>
+                                <label
+                                    className="map-switch"
+                                    title="Când e pornit, harta arată doar rândurile din fila deschisă"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        role="switch"
+                                        checked={clearOnSwitch}
+                                        onChange={toggleClearOnSwitch}
+                                    />
+                                    <span className="map-switch__track" aria-hidden="true" />
+                                    Golește harta când schimbi fila
+                                </label>
                             </div>
 
                             <div className="map-swap">
@@ -640,8 +697,10 @@ export default function DashboardPage() {
                                             <path d="M9 4v14M15 6v14" />
                                         </svg>
                                         <p>
-                                            Bifează rânduri din tabel și apasă <strong>Afișează pe hartă</strong>.
-                                            Trecerile la nivel și stațiile pot fi afișate împreună.
+                                            Bifează rânduri din tabel și apasă <strong>Afișează pe hartă</strong>.{" "}
+                                            {clearOnSwitch
+                                                ? "Harta arată doar rândurile din fila deschisă."
+                                                : "Trecerile la nivel și stațiile pot fi afișate împreună."}
                                         </p>
                                     </div>
                                 </div>
